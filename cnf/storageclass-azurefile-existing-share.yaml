@@ -1,0 +1,12 @@
+---
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: file.csi.azure.com
+provisioner: file.csi.azure.com
+parameters:
+  resourceGroup: $RESOURCE_GROUP
+  storageAccount: $STORAGE_ACCOUNT_NAME
+  shareName: $SHARE_NAME
+reclaimPolicy: Delete
+volumeBindingMode: Immediate
