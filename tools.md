@@ -106,7 +106,9 @@ az login
 ```
 
 ## Install the AZ ARO extension
-see [https://docs.microsoft.com/en-us/azure/openshift/tutorial-create-cluster#install-the-az-aro-extension](https://docs.microsoft.com/en-us/azure/openshift/tutorial-create-cluster#install-the-az-aro-extension)
+see :
+- [https://docs.microsoft.com/en-us/azure/openshift/tutorial-create-cluster#install-the-az-aro-extension](https://docs.microsoft.com/en-us/azure/openshift/tutorial-create-cluster#install-the-az-aro-extension)
+- [source code](https://github.com/Azure/azure-cli/tree/dev/src/azure-cli/azure/cli/command_modules/aro)
 ```sh
 az extension add -n aro --index https://az.aroapp.io/stable
 az extension update -n aro --index https://az.aroapp.io/stable
@@ -114,7 +116,11 @@ az provider register -n Microsoft.RedHatOpenShift --wait
 az -v
 
 ```
+## How to install HELM from RedHat
 
+```sh
+# https://mirror.openshift.com/pub/openshift-v4/clients/helm/latest
+```
 
 ## How to install HELM with Chocolatey
 ```sh

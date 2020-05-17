@@ -1,0 +1,17 @@
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: pv-azuredisk
+spec:
+  capacity:
+    storage: 10Gi
+  accessModes:
+    - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Retain
+  csi:
+    driver: disk.csi.azure.com
+    readOnly: false
+    volumeHandle: /subscriptions/${SUBSCRIPTION_ID}/resourcegroups/${RESOURCE_GROUP}/providers/microsoft.compute/disks/${DISK_ID}
+    volumeAttributes:
+      fsType: ext4
