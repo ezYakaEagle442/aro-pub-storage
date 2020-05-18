@@ -1,4 +1,5 @@
 prv/*
+deploy/*
 
 # Compiled class file
 *.class

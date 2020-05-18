@@ -36,9 +36,8 @@ When running the az aro create command, you can reference your pull secret using
 
 <span style="color:red">/!\ IMPORTANT </span> :  check & save your ssh_passphrase !!!
 
-Generate & save nodes [SSH keys](https://docs.microsoft.com/en-us/azure/aks/ssh) to Azure Key-Vault is a [Best-practice](https://github.com/Azure/k8s-best-practices/blob/master/Security_securing_a_cluster.md#securing-host-access)
+Generate & save nodes SSH keys to Azure Key-Vault is a Best-practice. If you want to save your keys to keyVault, [KV must be created first](setup-kv.md)
 
-If you want to save your keys to keyVault, [KV must be created first](setup-kv.md)
 
 ```sh
 ssh-keygen -t rsa -b 4096 -N $ssh_passphrase -f ~/.ssh/$ssh_key -C "youremail@groland.grd"

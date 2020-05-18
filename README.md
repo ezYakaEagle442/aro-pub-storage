@@ -27,7 +27,6 @@ See also :
    1. Get a Red Hat pull secret
    1. Setup [Network](setup-network.md)
    1. Create [SSH Keys](setup-prereq.md#generates-your-ssh-keys)
-1. Setup ARO
-   1. Setup [KeyVault](setup-kv.md)
-   1. Setup [ARO cluster](setup-aro.md)
+1. Setup [ARO cluster](setup-aro.md)
 1. Setup [HELM](setup-helm.md)
+1. Setup [CSI drivers](setup-store-CSI-driver.md)

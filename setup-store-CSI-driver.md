@@ -131,6 +131,8 @@ oc delete pvc pvc-azuredisk
 oc delete pv pv-azuredisk
 oc delete pods nginx-azuredisk
 
+az disk delete --name aro-dsk -g $rg_name -y
+
 # Topology(Availability Zone) : https://github.com/kubernetes-sigs/azuredisk-csi-driver/tree/master/deploy/example/topology
 # Check node topology after driver installation
 oc get no --show-labels | grep topo
@@ -172,10 +174,14 @@ oc create -f https://raw.githubusercontent.com/kubernetes-sigs/azurefile-csi-dri
 # oc create -f https://raw.githubusercontent.com/kubernetes-sigs/azurefile-csi-driver/master/deploy/example/storageclass-azurefile-existing-share.yaml
 
 # Create a File
-fs_share_name=arofs
-az storage account create --name $fs_share_name --kind FileStorage --sku Premium_ZRS --location $location -g $rg_name 
+str_name="stwefile""${appName,,}"
+az storage account create --name $str_name --kind FileStorage --sku Premium_ZRS --location $location -g $rg_name 
 az storage account list -g $rg_name
-fs_id=$(az storage account show --name $fs_share_name -g $rg_name --query id)
+
+fs_share_name=arofs
+az storage share create --name $fs_share_name --account-name $str_name
+az storage share list --account-name $str_name
+az storage share show --name $fs_share_name --account-name $str_name
 
 export RESOURCE_GROUP=$rg_name
 export STORAGE_ACCOUNT_NAME=$str_name
@@ -187,44 +193,138 @@ cat deploy/storageclass-azurefile-existing-share.yaml
 oc create -f ./cnf/storageclass-azurefile-existing-share.yaml
 oc create -f https://raw.githubusercontent.com/kubernetes-sigs/azurefile-csi-driver/master/deploy/example/pvc-azurefile-csi.yaml
 
+# validate PVC status and create an nginx pod
+oc describe pvc pvc-azurefile -w
+oc create -f https://raw.githubusercontent.com/kubernetes-sigs/azurefile-csi-driver/master/deploy/example/nginx-pod-azurefile.yaml
+
+# enter the pod container to do validation
+oc describe po nginx-azurefile -w
+oc exec -it nginx-azurefile -- bash
+# /mnt/azurefile directory should be mounted as cifs filesystem
+
 ```
 
-# Clean-Up
+## Clean-Up
+```sh
+az storage share delete --name $fs_share_name --account-name $str_name
+az storage account delete --name $str_name -g $rg_name -y
+
 oc delete sc file.csi.azure.com
 oc delete pvc pvc-azurefile
 oc delete pv pv-azurefile
 oc delete pods xxx
 
-# xxxx
+```
 
+# Install CEPH Driver
 
+See :
+- [https://github.com/ceph/ceph-csi/blob/master/docs/deploy-cephfs.md#deployment-with-kubernetes](https://github.com/ceph/ceph-csi/blob/master/docs/deploy-cephfs.md#deployment-with-kubernetes)
+- [https://github.com/ceph/ceph-csi/blob/master/charts/ceph-csi-cephfs/README.md](https://github.com/ceph/ceph-csi/blob/master/charts/ceph-csi-cephfs/README.md)
+- Your ARO [cluster must allow privileged pods](https://github.com/ceph/ceph-csi/blob/master/docs/deploy-cephfs.md#deployment-with-kubernetes) i.e. --allow-privileged flag must be set to true for both the API server and the kubelet. Moreover, as stated in the mount propagation docs, the Docker daemon of the cluster nodes must allow shared mounts.
+- [https://github.com/ceph/ceph-csi/issues/1077](https://github.com/ceph/ceph-csi/issues/1077)
 ```sh
 
+# https://docs.openshift.com/aro/4/authentication/managing-security-context-constraints.html
+# https://docs.openshift.com/aro/4/rest_api/index.html#securitycontext-v1core
+# https://kubernetes.io/docs/reference/command-line-tools-reference/kube-apiserver/
 
-envsubst < ./cnf/secrets-store-csi-provider-class.yaml > deploy/secrets-store-csi-provider-class.yaml
-cat deploy/secrets-store-csi-provider-class.yaml
-k apply -f deploy/secrets-store-csi-provider-class.yaml -n $target_namespace
-k get secretproviderclasses -n $target_namespace
-k describe secretproviderclasses azure-kv-vsegov-xxx -n $target_namespace
+export CSI_NAMESPACE="ceph-csi-cephfs"
+oc create namespace $CSI_NAMESPACE
 
-export ResourceID=$IDENTITY_RESOURCE_ID
-export ClientID=$IDENTITY_CLIENT_ID
+envsubst < ./cnf/ceph/csi-provisioner-rbac.yaml > deploy/csi-provisioner-rbac.yaml
+cat deploy/csi-provisioner-rbac.yaml
+oc create -f deploy/csi-provisioner-rbac.yaml -n $CSI_NAMESPACE
 
-envsubst < ./cnf/secrets-store-csi-demo-pod.yaml > deploy/secrets-store-csi-demo-pod.yaml
-cat deploy/secrets-store-csi-demo-pod.yaml
-k apply -f deploy/secrets-store-csi-demo-pod.yaml -n $target_namespace
-k get po -n $target_namespace
-k get events -n $target_namespace | grep -i "Error" 
-k describe pod nginx-secrets-store-inline -n $target_namespace
-k logs nginx-secrets-store-inline -n $target_namespace
+oc get clusterrolebindings -n $CSI_NAMESPACE | grep -i "ceph"
+oc get clusterroles -n $CSI_NAMESPACE | grep -i "ceph"
+
+envsubst < ./cnf/ceph/csi-nodeplugin-rbac.yaml > deploy/csi-nodeplugin-rbac.yaml
+cat deploy/csi-nodeplugin-rbac.yaml
+oc create -f deploy/csi-nodeplugin-rbac.yaml -n $CSI_NAMESPACE
+
+envsubst < ./cnf/ceph/csi-provisioner-psp.yaml > deploy/csi-provisioner-psp.yaml
+cat deploy/csi-provisioner-psp.yaml
+oc create -f deploy/csi-provisioner-psp.yaml -n $CSI_NAMESPACE
+
+envsubst < ./cnf/ceph/csi-nodeplugin-psp.yaml > deploy/csi-nodeplugin-psp.yaml
+cat deploy/csi-nodeplugin-psp.yaml
+oc create -f deploy/csi-nodeplugin-psp.yaml -n $CSI_NAMESPACE
+
+oc get psp
+
+oc create -f ./cnf/ceph/csi-config-map.yaml -n $CSI_NAMESPACE
+
+envsubst < ./cnf/ceph/csi-aro-scc.yaml > deploy/csi-aro-scc.yaml
+cat deploy/csi-aro-scc.yaml
+oc create -f deploy/csi-aro-scc.yaml
+
+oc get scc -o wide
+oc describe scc privileged
+# oc adm policy add-scc-to-user privileged system:serviceaccount:ceph-csi-cephfs:cephfs-csi-nodeplugin
+oc describe scc cephfs-csi-provisioner-scc
+
+oc create -f ./cnf/ceph/csi-cephfsplugin-provisioner.yaml -n $CSI_NAMESPACE
+oc create -f ./cnf/ceph/csi-cephfsplugin.yaml -n $CSI_NAMESPACE
 
 
-vmss_name=$(az vmss list -g $managed_rg --query [0].name -o tsv)
-echo "VMSS name: " $vmss_name
+oc get events -n $CSI_NAMESPACE | grep -i "Error" 
 
-node0_name=$(az vmss list-instances --name $vmss_name -g $managed_rg --query [0].name -o tsv)
-echo "Node0 VM name: " $node0_name
+oc get ds -n $CSI_NAMESPACE
+oc get deploy -n $CSI_NAMESPACE
+oc get rs -n $CSI_NAMESPACE
+oc get svc -n $CSI_NAMESPACE
+oc get cm -n $CSI_NAMESPACE
+oc get psp -n $CSI_NAMESPACE
+oc get rolebinding -n $CSI_NAMESPACE
+oc get role -n $CSI_NAMESPACE
+oc get ClusterRoleBinding | grep -i "ceph"
+oc get ClusterRole | grep -i "ceph"
+oc get sa -n $CSI_NAMESPACE
+oc get po -n $CSI_NAMESPACE
 
-az vmss identity show -g $managed_rg --name $vmss_name
 
+
+oc login $aro_api_server_url -u $aro_usr -p $aro_pwd
+# token_secret_value=$(oc get secrets default-token-rmslp -o json | jq -Mr '.data.token' | base64 -d)
+# token_secret_value=`cat ~/.azure/accessTokens.json`
+
+token_secret_value=$(oc whoami -t)
+# ENDPOINT=$(oc config current-context | cut -d/ -f2 | tr - .)
+# NAMESPACE=$(oc config current-context | cut -d/ -f1)
+# curl -k $aro_api_server_url/apis/v1/core/privileged=true -H "Authorization: Bearer $token_secret_value"
+
+curl -k \
+    -X POST \
+    -d @- \
+    -H "Authorization: Bearer $token_secret_value" \
+    -H 'Accept: application/json' \
+    -H 'Content-Type: application/json' \
+    $aro_api_server_url/apis/v1/core <<'EOF'
+{
+  "privileged=" : "true"
+}
+EOF
+
+curl -k $aro_api_server_url/apis/v1/namespaces -H "Authorization: Bearer $token_secret_value" -H 'Accept: application/json'
+
+
+oc adm policy --help
+
+
+helm install --namespace "ceph-csi-cephfs" "ceph-csi-cephfs" ceph-csi/ceph-csi-cephfs
+    #--set ceph-csi-cephfs.serviceAccountName.nodeplugin="" \
+    #--set ceph-csi-cephfs.serviceAccountName.provisioner="" 
+
+helm ls -n "ceph-csi-cephfs" 
+helm status "ceph-csi-cephfs" -n "ceph-csi-cephfs"
+
+
+
+
+```
+
+## Clean-Up
+```sh
+helm uninstall "ceph-csi-cephfs" -n "ceph-csi-cephfs"
 ```

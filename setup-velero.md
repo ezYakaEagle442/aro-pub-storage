@@ -5,6 +5,10 @@ See :
 - [https://github.com/vmware-tanzu/velero-plugin-for-microsoft-azure](https://github.com/vmware-tanzu/velero-plugin-for-microsoft-azure)
 - [https://velero.io/docs/v1.3.2/supported-providers/](https://velero.io/docs/v1.3.2/supported-providers/)
 
+
+
+<span style="color:red">/!\ IMPORTANT </span> :  [Velero/Kasten won’t work for disk snapshots](https://github.com/Azure/OpenShift/issues/186)
+
 ## Pre-requisites
 
 ```sh

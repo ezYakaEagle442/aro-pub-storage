@@ -43,7 +43,6 @@ See [https://docs.microsoft.com/en-us/azure/openshift/tutorial-connect-cluster#c
 
 ```sh
 az aro list-credentials -n $cluster_name -g $rg_name
-
 aro_usr=$(az aro list-credentials -n $cluster_name -g $rg_name | jq -r '.kubeadminUsername')
 aro_pwd=$(az aro list-credentials -n $cluster_name -g $rg_name | jq -r '.kubeadminPassword')
 
@@ -67,6 +66,8 @@ source <(oc completion bash)
 echo "source <(oc completion bash)" >> ~/.bashrc 
 
 oc login $aro_api_server_url -u $aro_usr -p $aro_pwd
+oc whoami
+oc cluster-info
 
 ```
 
@@ -101,9 +102,10 @@ oc get pods
 oc top node
 oc api-resources --namespaced=true
 oc api-resources --namespaced=false
+oc get crds
 
-oc get roles --all-namespaces
 oc get serviceaccounts --all-namespaces
+oc get roles --all-namespaces
 oc get rolebindings --all-namespaces
 oc get ingresses  --all-namespaces
 ```

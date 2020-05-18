@@ -1,0 +1,31 @@
+# sample inspired from https://github.com/rook/rook/blob/master/cluster/examples/kubernetes/ceph/operator-openshift.yaml#L54
+# scc for the CSI driver
+kind: SecurityContextConstraints
+apiVersion: security.openshift.io/v1
+metadata:
+  name: cephfs-csi-provisioner-scc
+allowPrivilegedContainer: true
+allowHostNetwork: true
+allowHostDirVolumePlugin: true
+priority:
+allowedCapabilities: ['*']
+allowHostPorts: true
+allowHostPID: true #
+allowHostIPC: true
+readOnlyRootFilesystem: false
+requiredDropCapabilities: []
+defaultAddCapabilities: []
+runAsUser:
+  type: RunAsAny
+seLinuxContext:
+  type: RunAsAny
+fsGroup:
+  type: RunAsAny
+supplementalGroups:
+  type: RunAsAny
+# allowedFlexVolumes:
+#  - driver: "ceph.rook.io/rook"
+#  - driver: "ceph.rook.io/rook-ceph"
+volumes: ['*']
+users:
+  - system:serviceaccount:${CSI_NAMESPACE}:cephfs-csi-nodeplugin

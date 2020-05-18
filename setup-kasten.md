@@ -3,7 +3,8 @@
 See :
 - [https://docs.kasten.io/install/azure/azure.html](https://docs.kasten.io/install/azure/azure.html)
 - []()
-- []()
+
+<span style="color:red">/!\ IMPORTANT </span> :  [Velero/Kasten won’t work for disk snapshots](https://github.com/Azure/OpenShift/issues/186)
 
 ```sh
 

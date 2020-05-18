@@ -18,6 +18,11 @@ helm search repo mongodb
 
 helm repo update
 
+# https://github.com/ceph/ceph-csi/blob/master/charts/ceph-csi-cephfs/README.md
+# https://hub.helm.sh/charts/ceph-csi/ceph-csi-cephfs
+helm repo add ceph-csi https://ceph.github.io/csi-charts
+# helm repo add ceph-csi-cephfs https://github.com/ceph/ceph-csi/tree/master/charts/ceph-csi-cephfs
+
 # https://vmware-tanzu.github.io/helm-charts/
 helm repo add vmware-tanzu https://vmware-tanzu.github.io/helm-charts
 
