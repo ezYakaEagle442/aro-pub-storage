@@ -26,6 +26,19 @@ supplementalGroups:
 # allowedFlexVolumes:
 #  - driver: "ceph.rook.io/rook"
 #  - driver: "ceph.rook.io/rook-ceph"
-volumes: ['*']
+# https://docs.openshift.com/container-platform/4.3/authentication/managing-security-context-constraints.html#authorization-controlling-volumes_configuring-internal-oauth
+# volumes: ['*']
+volumes:
+  - azureFile
+  - azureDisk
+  - hostPath
+  - cephFS
+  - nfs
+  - configMap
+  - emptyDir
+  - flexVolume
+  - persistentVolumeClaim
+  - projected
+  - secret
 users:
   - system:serviceaccount:${CSI_NAMESPACE}:cephfs-csi-nodeplugin

@@ -23,6 +23,10 @@ helm repo update
 helm repo add ceph-csi https://ceph.github.io/csi-charts
 # helm repo add ceph-csi-cephfs https://github.com/ceph/ceph-csi/tree/master/charts/ceph-csi-cephfs
 
+# https://rook.io/docs/rook/v1.3/helm-operator.html
+# https://github.com/rook/rook/tree/release-1.3/cluster/charts/rook-ceph
+helm repo add rook-release https://charts.rook.io/release
+
 # https://vmware-tanzu.github.io/helm-charts/
 helm repo add vmware-tanzu https://vmware-tanzu.github.io/helm-charts
 
