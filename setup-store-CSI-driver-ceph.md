@@ -34,15 +34,28 @@ object-openshift.yaml: Creates an object store with rgw listening on a valid por
 # HELM Install https://rook.io/docs/rook/v1.3/helm-operator.html
 # https://github.com/rook/rook/tree/release-1.3/cluster/charts/rook-ceph
 rook_namespace="rook-ceph"
+# oc create ns $rook_namespace
+
+# https://rook.io/docs/rook/v1.3/ceph-openshift.html
+
+# The cluster settings in cluster.yaml are largely isolated from the differences in OpenShift. There is perhaps just one to take note of:
+# dataDirHostPath: Ensure that it points to a valid, writable path on the host systems
+sudo mkdir /var/lib/rook
+
+oc create -f ./cnf/ceph/ceph-rook/common.yaml -n $rook_namespace
+oc create -f ./cnf/ceph/ceph-rook/operator-openshift.yaml -n $rook_namespace
+oc create -f ./cnf/ceph/ceph-rook/cluster.yaml -n $rook_namespace
+
+oc get events -n $rook_namespace | grep -i "Error" 
+
 helm show chart rook-release/rook-ceph
 helm inspect chart rook-release/rook-ceph
-oc create ns $rook_namespace
-helm install rook-ceph rook-release/rook-ceph --namespace $rook_namespace \
-    --set csi.enableCephfsDriver=false \
-    --set csi.logLevel=5
+# helm install rook-ceph rook-release/rook-ceph --namespace $rook_namespace \
+#     --set csi.enableCephfsDriver=false \
+#     --set csi.logLevel=5
 
-helm ls -n $rook_namespace
-helm status rook-ceph -n $rook_namespace
+# helm ls -n $rook_namespace
+# helm status rook-ceph -n $rook_namespace
 
 oc get crds -n $rook_namespace | grep -i "ceph"
 oc get rolebinding -n $rook_namespace | grep -i "ceph"
@@ -62,6 +75,10 @@ oc get sc -A
 oc get events -n $rook_namespace | grep -i "Error" 
 
 ```
+
+### Troubleshoot
+
+See [https://rook.io/docs/rook/v1.3/openshift-issues.html](https://rook.io/docs/rook/v1.3/openshift-issues.html)
 
 ## Install CEPH Driver
 

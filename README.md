@@ -29,4 +29,7 @@ See also :
    1. Create [SSH Keys](setup-prereq.md#generates-your-ssh-keys)
 1. Setup [ARO cluster](setup-aro.md)
 1. Setup [HELM](setup-helm.md)
-1. Setup [CSI drivers](setup-store-CSI-driver.md)
+1. Setup CSI drivers
+   1. Setup [Azure Disk CSI driver](setup-store-CSI-driver-azure-disk.md)
+   1. Setup [Azure File CSI driver](setup-store-CSI-driver-azure-file.md)
+   1. Setup [Azure Disk CSI driver](setup-store-CSI-driver-ceph.md)

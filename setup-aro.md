@@ -1,6 +1,9 @@
 
 
 ```sh
+
+pull_secret=`cat pull-secret.txt`
+
 az aro create \
   --name $cluster_name \
   --vnet $vnet_name \
