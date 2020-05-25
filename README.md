@@ -30,7 +30,7 @@ See also :
 
 ![Persistent storage integration ](./img/Persistent_storage_integration_with_k8s.png)
 
-![High-Level Architecture](./img/aro_csi_design.png)
+![High-Level Architecture](./img/ARO_CSI_design.png)
 
 1. [ARO does not ship with any CSI drivers](https://docs.openshift.com/aro/4/storage/persistent_storage/persistent-storage-csi.html), it uses [Kubernetes PV framework](https://kubernetes.io/docs/concepts/storage/volumes/#azuredisk) aka in-tree plugin. These volume plugins were “in-tree” meaning their code was part of the core k8s code and shipped with the core Kubernetes binaries.
 
