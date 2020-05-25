@@ -201,6 +201,24 @@ function kubectl([Parameter(ValueFromRemainingArguments = $true)]$params) { Writ
 function k([Parameter(ValueFromRemainingArguments = $true)]$params) { Write-Output "> k $(@($params | ForEach-Object {$_}) -join ' ')"; & kubectl.exe $params; }
 ```
 
+## VIM tips
+
+See [vim cheatsheet](https://devhints.io/vim)
+
+```sh
+# set ts=2 : ts stands for tabstop. It sets the tab width to 2 spaces.
+# sts stands for softtabstop. Insert ou delete 2 spaces with tab or back keys.
+# sw stands for shiftwidth. Number of spaces used during indentation > or <
+# set et : et stands for expandtab. While in insert mode, it replaces tabs by spaces
+vi ~/.vimrc
+set ts=2 sts=2 sw=2 et
+. ~/.vimrc
+```
+
+## ARO tips
+
+[https://github.com/stuartatmicrosoft/azure-aro](https://github.com/stuartatmicrosoft/azure-aro)
+
 ## k9s
 K9s provides a terminal UI to interact with your Kubernetes clusters. The aim of this project is to make it easier to navigate, observe and manage your applications in the wild. K9s continually watches Kubernetes for changes and offers subsequent commands to interact with your observed resources.
 

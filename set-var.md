@@ -44,8 +44,6 @@ echo "ingress visibility is : " $ingress_visibility
 ssh_passphrase="<your secret>"
 ssh_key="${appName}-key" # id_rsa
 
-# Storage account name must be between 3 and 24 characters in length and use numbers and lower-case letters only
-
 dns_zone="cloudapp.azure.com"
 echo "DNS Zone is : " $dns_zone
 
@@ -55,6 +53,7 @@ echo "App DNS zone " $app_dns_zone
 custom_dns="akshandsonlabs.com"
 echo "Custom DNS is : " $custom_dns
 
+# Storage account name must be between 3 and 24 characters in length and use numbers and lower-case letters only
 storage_name="stwe""${appName,,}"
 echo "Storage name:" $storage_name
 

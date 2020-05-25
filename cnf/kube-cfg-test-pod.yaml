@@ -1,0 +1,47 @@
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: test-kube-cfg-pv
+  labels:
+    type: local
+spec:
+  storageClassName: manual
+  capacity:
+    storage: 10Gi
+  accessModes:
+    - ReadWriteOnce
+  hostPath:
+    path: "/etc/origin"
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: test-kube-cfg-pvc
+spec:
+  storageClassName: manual
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+---  
+apiVersion: v1
+kind: Pod
+metadata:
+  name: test-kube-cnf-pod
+spec:
+  volumes:
+    - name: test-kube-cfg-pv-storage
+      persistentVolumeClaim:
+        claimName: test-kube-cfg-pvc
+  containers:
+    - name: test-container
+      image: nginx
+      ports:
+        - containerPort: 80
+          name: "http-server"
+      volumeMounts:
+        - mountPath: "/mnt/origin"
+          name: test-kube-cfg-pv-storage
+
+

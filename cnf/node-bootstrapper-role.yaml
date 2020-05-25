@@ -1,0 +1,24 @@
+kind: Role
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: node-bootstrapper-secret-reader
+  namespace: kube-system
+rules:
+- apiGroups: [""] # "" indicates the core API group
+  resources: ["secrets"]
+  resourceNames: ["azure-cloud-provider"]  
+  verbs: ["get"]
+---  
+kind: RoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: node-bootstrapper-secret-reader-binding
+  namespace: kube-system # This only grants permissions within the "kube-system" namespace
+subjects:
+  - kind: ServiceAccount
+    name: node-bootstrapper # openshift-machine-config-operator:node-bootstrapper 
+    namespace: openshift-machine-config-operator # Should match namespace where SA lives
+roleRef:
+  kind: Role
+  name: node-bootstrapper-secret-reader # this must match the name of the Role or ClusterRole you wish to bind to
+  apiGroup: rbac.authorization.k8s.io
