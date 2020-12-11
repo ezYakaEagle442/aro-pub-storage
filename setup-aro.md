@@ -4,6 +4,8 @@
 
 pull_secret=`cat pull-secret.txt`
 
+az provider show -n  Microsoft.RedHatOpenShift --query  "resourceTypes[?resourceType == 'OpenShiftClusters']".locations 
+
 az aro create \
   --name $cluster_name \
   --vnet $vnet_name \
@@ -36,6 +38,9 @@ echo "ARO Ingress Controller IP: " $ing_ctl_ip
 aro_spn=$(az aro show -n $cluster_name -g $rg_name --query 'servicePrincipalProfile.clientId' -o tsv)
 echo "ARO Service Principal Name: " $aro_spn
 
+managed_rg=$(az aro show -n $cluster_name -g $rg_name --query 'clusterProfile.resourceGroupId' -o tsv)
+echo "ARO Managed Resource Group : " $managed_rg
+
 cat ~/.azure/accessTokens.json
 # You can have a look at the App. Registrations in the portal at https://ms.portal.azure.com/#blade/Microsoft_AAD_IAM/ActiveDirectoryMenuBlade/RegisteredApps
 
@@ -58,7 +63,10 @@ aro_pwd=$(az aro list-credentials -n $cluster_name -g $rg_name | jq -r '.kubeadm
 See [https://docs.microsoft.com/en-us/azure/openshift/tutorial-connect-cluster#install-the-openshift-cli](https://docs.microsoft.com/en-us/azure/openshift/tutorial-connect-cluster#install-the-openshift-cli)
 ```sh
 cd ~
-wget https://downloads-openshift-console.apps.rptd5b3w.westeurope.aroapp.io/amd64/linux/oc.tar
+aro_download_url=${aro_console_url/console/downloads}
+echo "aro_download_url" $aro_download_url
+
+wget $aro_download_url/amd64/linux/oc.tar
 
 mkdir openshift
 tar -xvf oc.tar -C openshift
@@ -111,4 +119,20 @@ oc get serviceaccounts --all-namespaces
 oc get roles --all-namespaces
 oc get rolebindings --all-namespaces
 oc get ingresses  --all-namespaces
+
+oc create serviceaccount api-service-account
+oc apply -f ./cnf/clusterRole.yaml
+
+sa_secret_name=$(oc get serviceaccount api-service-account  -o json | jq -Mr '.secrets[].name')
+echo "SA secret name " $sa_secret_name
+
+token_secret_value=$(oc get secrets  $sa_secret_name -o json | jq -Mr '.items[0].data.token' | base64 -d)
+echo "SA secret  " $sa_secret_value
+
+# kube_url=$(oc get endpoints -o jsonpath='{.items[0].subsets[0].addresses[0].ip}')
+# echo "Kube URL " $kube_url
+
+curl -k $aro_api_server_url/api/v1/namespaces -H "Authorization: Bearer $token_secret_value" -H 'Accept: application/json'
+curl -k $aro_api_server_url/apis/user.openshift.io/v1/users/~ -H "Authorization: Bearer $token_secret_value" -H 'Accept: application/json'
+
 ```

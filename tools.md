@@ -39,6 +39,43 @@ Ex: run CloudShell in France Central Region if you plan do deploy your resources
 ```sh
 # https://chocolatey.org/packages/wsl
 choco install wsl --Yes --confirm --accept-license --verbose 
+choco install wsl-ubuntu-1804 --Yes --confirm --accept-license --verbose
+```
+
+## Upgrade to to WSL 2
+See [https://docs.microsoft.com/en-us/windows/wsl/install-win10#update-to-wsl-2](https://docs.microsoft.com/en-us/windows/wsl/install-win10#update-to-wsl-2)
+Pre-req: Windows 10, updated to version 2004, **Build 19041** or higher.
+
+```sh
+
+
+```
+
+## Setup PowerShell in WSL
+See :
+- [https://docs.microsoft.com/fr-fr/powershell/scripting/install/installing-powershell-core-on-linux?view=powershell-7#ubuntu-1804](https://docs.microsoft.com/fr-fr/powershell/scripting/install/installing-powershell-core-on-linux?view=powershell-7#ubuntu-1804)
+- [https://www.saggiehaim.net/powershell/install-powershell-7-on-wsl-and-ubuntu](https://www.saggiehaim.net/powershell/install-powershell-7-on-wsl-and-ubuntu)
+
+https://github.com/PowerShell/PowerShell/blob/master/docs/building/linux.md
+
+```sh
+# Download the Microsoft repository GPG keys
+wget -q https://packages.microsoft.com/config/ubuntu/18.04/packages-microsoft-prod.deb
+
+# Register the Microsoft repository GPG keys
+sudo dpkg -i packages-microsoft-prod.deb
+
+# Update the list of products
+sudo apt-get update
+
+# Enable the "universe" repositories
+sudo add-apt-repository universe
+
+# Install PowerShell
+sudo apt-get install -y powershell
+
+# restart WSL
+pwsh
 
 ```
 
@@ -63,6 +100,27 @@ kubectl api-versions
 # https://gitforwindows.org/
 choco install git.install --Yes --confirm --accept-license
 
+```
+
+### Git Troubleshoot
+
+[https://www.illuminiastudios.com/dev-diaries/ssh-on-windows-subsystem-for-linux](https://www.illuminiastudios.com/dev-diaries/ssh-on-windows-subsystem-for-linux)
+[https://help.github.com/en/enterprise/2.20/user/github/authenticating-to-github/generating-a-new-ssh-key-and-adding-it-to-the-ssh-agent](https://help.github.com/en/enterprise/2.20/user/github/authenticating-to-github/generating-a-new-ssh-key-and-adding-it-to-the-ssh-agent)
+
+Check the fingerprint of you SSK key in GitHub with the SSH Key used by git.
+
+If your GIT repo URL starts with HTTPS (ex: "https://github.com/<!XXXyour-git-homeXXX!/spring-petclinic.git"), git CLI will always prompt for password.
+When MFA is enabled on GitHub and that you plan to use SSH Keys, you have to use: 
+git clone git@github.com:your-git-home/spring-petclinic.git
+
+```sh
+eval `ssh-agent -s`
+eval $(ssh-agent -s) 
+sudo service ssh status
+# sudo service ssh --full-restart
+ssh-add /home/~username/.ssh/githubkey
+ssh-keygen -l -E MD5 -f /home/~username/.ssh/githubkey
+ssh -T git@github.com
 ```
 
 ## How to install AZ CLI with Chocolatey

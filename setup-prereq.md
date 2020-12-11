@@ -26,37 +26,21 @@ Click Download pull secret from [https://cloud.redhat.com/openshift/install/azur
 Keep the saved pull-secret.txt file somewhere safe - it will be used in each cluster creation.
 When running the az aro create command, you can reference your pull secret using the --pull-secret @pull-secret.txt parameter. Execute az aro create from the directory where you stored your pull-secret.txt file. Otherwise, replace @pull-secret.txt with @<path-to-my-pull-secret-file>.
 
-
-```sh
-
-
-```
-
-# Generates your SSH keys
-
-<span style="color:red">/!\ IMPORTANT </span> :  check & save your ssh_passphrase !!!
-
-Generate & save nodes SSH keys to Azure Key-Vault is a Best-practice. If you want to save your keys to keyVault, [KV must be created first](setup-kv.md)
+See also [https://github.com/stuartatmicrosoft/azure-aro#aro4-replace-pull-secretsh](https://github.com/stuartatmicrosoft/azure-aro#aro4-replace-pull-secretsh)
 
 
-```sh
-ssh-keygen -t rsa -b 4096 -N $ssh_passphrase -f ~/.ssh/$ssh_key -C "youremail@groland.grd"
+## Ensure you have the appropriate Roles to be allowed to create a Service Principal
 
-# https://www.ssh.com/ssh/keygen/
-# -y Read a private OpenSSH format file and print an OpenSSH public key to stdout.
-# ssh-keygen -y -f ~/.ssh/id_rsa > ~/.ssh/id_rsa.pub
-# ssh-keygen -l -f ~/.ssh/id_rsa
-# az keyvault key create --name $ssh_key --vault-name $vault_name --size 2048 --kty RSA
-az keyvault key import --name $ssh_key --vault-name $vault_name --pem-file ~/.ssh/$ssh_key --pem-password $ssh_passphrase
-az keyvault key list --vault-name $vault_name
-az keyvault key show --name $ssh_key --vault-name $vault_name
-az keyvault key download --name $ssh_key --vault-name $vault_name --encoding PEM --file key2
-cat key1
-ls -al key1
-file key1
-stat key1
-ls -lApst key1
-chmod go-rw key1
-ssh-keygen -y -f key1.pem > key1.pub
+[az ad group create CLI](https://docs.microsoft.com/en-us/cli/azure/ad/group?view=azure-cli-latest#az_ad_group_create)
+[az ad user create CLI](https://docs.microsoft.com/en-us/cli/azure/ad/user?view=azure-cli-latest#az_ad_user_create)
+[az ad group member add CLI](https://docs.microsoft.com/en-us/cli/azure/ad/group/member?view=azure-cli-latest#az_ad_group_member_add)
+[az role assignment create CLI](https://docs.microsoft.com/en-us/cli/azure/role/assignment?view=azure-cli-latest#az_role_assignment_create)
 
-```
+
+Too much: [Application Administrator permission](https://docs.microsoft.com/en-us/azure/active-directory/roles/permissions-reference#application-administrator-permissions)
+[Application Developer permission is enough to create a Service Principal](https://docs.microsoft.com/en-us/azure/active-directory/roles/permissions-reference#application-developer-permissions)
+- microsoft.directory/servicePrincipals/create
+- microsoft.directory/applications/create
+- microsoft.directory/appRoleAssignments/create
+
+You could add roles to a Group, this is in PREVIEW in the [Portal](https://docs.microsoft.com/en-us/azure/active-directory/roles/groups-concept#required-license-plan) but this feature requires you to have an available Azure AD Premium P1 license in your Azure AD organization.

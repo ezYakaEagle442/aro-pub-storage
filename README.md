@@ -12,6 +12,7 @@ See also :
 
 - [Azure ARO docs](https://docs.microsoft.com/en-us/azure/openshift/tutorial-create-cluster)
 - [ARO 4.x storage docs](https://docs.openshift.com/aro/4/storage/understanding-persistent-storage.html)
+- [Optimizing Storage in ARO](https://docs.openshift.com/aro/4/scalability_and_performance/optimizing-storage.html)
 - [http://aroworkshop.io](http://aroworkshop.io)
 - [https://github.com/akamenev/aro-private](https://github.com/akamenev/aro-private)
 - [https://github.com/stuartatmicrosoft/azure-aro/blob/master/aro4-replace-pull-secret.sh](https://github.com/stuartatmicrosoft/azure-aro/blob/master/aro4-replace-pull-secret.sh)

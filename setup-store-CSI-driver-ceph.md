@@ -6,8 +6,6 @@ See also :
 - [https://www.openshift.com/blog/openshift-container-storage-4-introduction-to-ceph](https://www.openshift.com/blog/openshift-container-storage-4-introduction-to-ceph)
 - [https://ceph.io](https://ceph.io)
 - [https://github.com/container-storage-interface/spec](https://github.com/container-storage-interface/spec)
-- [https://github.com/kubernetes-sigs/azuredisk-csi-driver](https://github.com/kubernetes-sigs/azuredisk-csi-driver)
-- [https://github.com/kubernetes-sigs/azurefile-csi-driver](https://github.com/kubernetes-sigs/azurefile-csi-driver)
 - [https://kubernetes-csi.github.io/docs/topology.html](https://kubernetes-csi.github.io/docs/topology.html)
 - [https://kubernetes-csi.github.io/docs/drivers.html](https://kubernetes-csi.github.io/docs/drivers.html)
 - [https://github.com/ceph/ceph-csi](https://github.com/ceph/ceph-csi)
@@ -17,17 +15,19 @@ See also :
 
 ## Install a CEPH Cluster with Rook
 
-Rook deploys and manages Ceph clusters running in Kubernetes, while also enabling management of storage resources and provisioning via Kubernetes APIs. We recommend Rook as the way to run Ceph in Kubernetes or to connect an existing Ceph storage cluster to Kubernetes.
+Rook deploys and manages Ceph clusters running in Kubernetes, while also enabling management of storage resources and provisioning via Kubernetes APIs. Rook is recommended as the way to run Ceph in Kubernetes or to connect an existing Ceph storage cluster to Kubernetes.
+
+[Rook already provides its own CSI driver](https://rook.io/docs/rook/master/ceph-csi-drivers.html) for the ceph cluster its managing.
 
 See :
 - [https://github.com/ceph/ceph/blob/master/doc/install/index.rst#recommended-methods](https://github.com/ceph/ceph/blob/master/doc/install/index.rst#recommended-methods)
 - [Rook CEPH examples](https://github.com/rook/rook/tree/release-1.3/cluster/examples/kubernetes/ceph)
 - [https://rook.io/docs/rook/v1.3/flexvolume.html#openshift](https://rook.io/docs/rook/v1.3/flexvolume.html#openshift)
+- [https://github.com/ceph/ceph-csi/issues/360](https://github.com/ceph/ceph-csi/issues/360)
 
 The settings for Rook in OpenShift are described below, and are also included in the example yaml files:
-
-operator-openshift.yaml: Creates the security context constraints and starts the operator deployment
-object-openshift.yaml: Creates an object store with rgw listening on a valid port number for OpenShift
+  - operator-openshift.yaml: Creates the security context constraints and starts the operator deployment
+  - object-openshift.yaml: Creates an object store with rgw listening on a valid port number for OpenShift
 
 ```sh
 

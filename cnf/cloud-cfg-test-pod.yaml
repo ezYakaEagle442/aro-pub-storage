@@ -19,6 +19,7 @@ metadata:
   name: test-host-pvc
 spec:
   storageClassName: manual
+  volumeName: test-host-pv #
   accessModes:
     - ReadWriteOnce
   resources:

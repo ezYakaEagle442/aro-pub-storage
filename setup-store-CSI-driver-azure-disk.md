@@ -19,6 +19,8 @@ The driver initialization depends on a Cloud provider config file, usually it's 
 
 <span style="color:red">/!\ IMPORTANT </span> : In openshift the creds file is located in **“/etc/kubernetes/cloud.conf”**, so you would need to replace the path in the deployment for the driver from “/etc/kubernetes/azure.json” to “/etc/kubernetes/cloud.conf”, issue #[398](https://github.com/kubernetes-sigs/azuredisk-csi-driver/issues/398) logged.
 
+**To specify a different cloud provider config file, create azure-cred-file configmap before driver installation, e.g. for OpenShift, it's /etc/kubernetes/cloud.conf**
+
 ```sh
 
 # https://github.com/kubernetes-sigs/azuredisk-csi-driver/blob/master/docs/read-from-secret.md
@@ -34,12 +36,14 @@ echo "Azure Cloud Provider config secret " $azure_cnf_secret
 azure_cnf_secret_length=$(echo -n $azure_cnf_secret | wc -c)
 echo "Azure Cloud Provider config secret length " $azure_cnf_secret_length
 
-aadClientId="${azure_cnf_secret:14:35}"
+# This is quick & dirty, should be improved with a Regexp
+aadClientId="${azure_cnf_secret:13:36}"
 echo "aadClientId " $aadClientId
 
-aadClientSecret="${azure_cnf_secret:53:$azure_cnf_secret_length}"
+aadClientSecret="${azure_cnf_secret:67:$azure_cnf_secret_length}"
 echo "aadClientSecret" $aadClientSecret
 
+# See https://github.com/kubernetes-sigs/cloud-provider-azure/blob/master/docs/cloud-provider-config.md#auth-configs
 echo -e "{\n"\
 "\""tenantId\"": \""$tenantId\"",\n"\
 "\""subscriptionId\"": \""$subId\"",\n"\
@@ -48,23 +52,99 @@ echo -e "{\n"\
 "\""aadClientId\"": \""$aadClientId\"",\n"\
 "\""aadClientSecret\"": \""$aadClientSecret\""\n"\
 "}\n"\
-> deploy/azure.json
+> deploy/cloud.conf
 
-cat deploy/azure.json
+cat deploy/cloud.conf
 
+# https://v1-16.docs.kubernetes.io/docs/tasks/configure-pod-container/configure-pod-configmap/#create-configmaps-from-files
+oc create configmap azure-cred-file -n kube-system --from-file="./deploy/cloud.conf"  
+oc get cm -n kube-system
+oc describe cm azure-cred-file -n kube-system
+oc get cm  azure-cred-file -n kube-system -o yaml
 
 oc adm policy add-scc-to-user privileged system:serviceaccount:kube-system:csi-azuredisk-node-sa
 oc describe scc privileged
 
-# IMPORTANT : The secret should be put in kube-system namespace and its name should be azure-cloud-provider
-# oc create secret generic azure-cnf --from-file=deploy/azure.json -n kube-system
-# oc describe secret azure-cnf -n kube-system
+csi-azuredisk-controller-secret-role
+oc describe role azure-creds-secret-reader -n kube-system
+oc describe rolebinding aro-cloud-provider-secret-read -n kube-system
+oc describe role aro-cloud-provider-secret-reader -n kube-system
+
+oc describe clusterrole azure-cloud-provider-secret-getter
+oc describe sa azure-cloud-provider -n kube-system
+oc describe sa node-bootstrapper -n openshift-machine-config-operator
+
+
+# Must allow SA node-bootstrapper from Namespace openshift-machine-config-operator to get secrets in "kube-system",
+# saw error : "system:serviceaccount:openshift-machine-config-operator:node-bootstrapper" cannot get resource "secrets" in API group "" in the namespace "kube-system", skip initializing from secret
+oc apply -f ./cnf/node-bootstrapper-role.yaml
+oc describe role node-bootstrapper-secret -n kube-system
+oc describe rolebinding node-bootstrapper-secret-reader-binding -n kube-system
+
+
+#oc describe role azure-creds-secret-reader -n kube-system
+# oc describe rolebinding aro-cloud-provider-secret-read -n kube-system
+# oc describe clusterrole azure-cloud-provider-secret-getter
+# oc describe sa azure-cloud-provider -n kube-system
+# oc describe sa node-bootstrapper -nopenshift-machine-config-operator
+# oc describe clusterrolebinding azure-cloud-provider-secret-getter-controller
+# oc describe clusterrolebinding azure-cloud-provider-secret-getter-node
+
+
 ```
 
 # Install the Azure Disk CSI Driver
 
+[ConfigMaps](https://kubernetes.io/docs/tasks/configure-pod-container/configure-pod-configmap/#restrictions) :
+- You must create the ConfigMap before referencing it in a Pod specification
+- ConfigMaps reside in a specific Namespace. A ConfigMap can only be referenced by pods residing in the same namespace.
+
 ```sh
-curl -skSL https://raw.githubusercontent.com/kubernetes-sigs/azuredisk-csi-driver/v0.7.0/deploy/install-driver.sh | bash -s v0.7.0 --
+
+oc apply -f ./cnf/cloud-cfg-test-pod.yaml
+oc describe pvc test-host-pvc
+oc describe pv test-host-pv
+oc describe pod test-pod
+oc get po
+oc exec -it test-pod -- bash
+ls -al /mnt/k8s
+cat /mnt/k8s/cloud.conf
+
+
+# https://unix.stackexchange.com/questions/203606/is-there-any-way-to-install-nano-on-coreos
+# /bin/toolbox
+# dnf install nano -y
+apt-get update
+apt-get upgrade
+apt search nano 
+apt-get install nano -y
+# apt-get install nano-tiny -y
+nano /mnt/k8s/cloud.conf
+
+wget https://raw.githubusercontent.com/mohatb/kubectl-wls/master/kubectl-wls
+chmod +x ./kubectl-wls
+sudo mv ./kubectl-wls /usr/local/bin/kubectl-wls
+kubectl-wls
+
+# test
+systemctl status kubelet
+
+
+# https://docs.openshift.com/container-platform/4.3/architecture/infrastructure_components/kubernetes_infrastructure.html
+oc apply -f ./cnf/kube-cfg-test-pod.yaml
+oc describe pvc test-kube-cfg-pvc
+oc describe pv test-kube-cfg-pv
+oc describe pod test-kube-cnf-pod
+oc get po -o wide
+oc exec -it test-kube-cnf-pod -- bash
+ls -al /mnt/origin
+cat /mnt/origin/kubeconfig
+
+# oc apply -f ./cnf/csi-azuredisk-controller.yaml
+
+driver_version=master #v0.7.0
+echo "Driver version " $driver_version
+curl -skSL https://raw.githubusercontent.com/kubernetes-sigs/azuredisk-csi-driver/$driver_version/deploy/install-driver.sh | bash -s $driver_version --
 
 oc get rolebinding -n kube-system | grep -i "azuredisk"
 oc get role -n kube-system | grep -i "azuredisk"
@@ -80,9 +160,12 @@ oc get rs -n kube-system | grep -i "azuredisk"
 oc get po -n kube-system | grep -i "azuredisk"
 oc get sc -A
 
+oc describe clusterrole csi-azuredisk-controller-secret-role
+oc describe clusterrolebinding csi-azuredisk-controller-secret-binding
+
 
 # Enable snapshot support ==> Note: only available from v1.17.0
-# curl -skSL https://raw.githubusercontent.com/kubernetes-sigs/azuredisk-csi-driver/v0.7.0/deploy/install-driver.sh | bash -s v0.7.0 snapshot --
+# curl -skSL https://raw.githubusercontent.com/kubernetes-sigs/azuredisk-csi-driver/$driver_version/deploy/install-driver.sh | bash -s $driver_version snapshot --
 
 oc -n kube-system get pod -l app=csi-azuredisk-controller -o wide  --watch
 oc -n kube-system get pod -l app=csi-azuredisk-node -o wide  --watch
@@ -91,19 +174,19 @@ oc get events -n kube-system | grep -i "Error"
 for pod in $(oc get pods -l app=csi-azuredisk-controller -n kube-system -o custom-columns=:metadata.name)
 do
 	oc describe pod $pod -n kube-system | grep -i "Error"
-	oc logs $pod csi-provisioner -n kube-system | grep -i "Error"
-    oc logs $pod csi-attacher -n kube-system | grep -i "Error"
-    oc logs $pod csi-snapshotter -n kube-system | grep -i "Error"
-    oc logs $pod csi-resizer -n kube-system | grep -i "Error"
-    oc logs $pod liveness-probe -n kube-system | grep -i "Error"
-    oc logs $pod azuredisk -n kube-system | grep -i "Error"
+	oc logs $pod -c csi-provisioner -n kube-system | grep -i "Error"
+    oc logs $pod -c csi-attacher -n kube-system | grep -i "Error"
+    oc logs $pod -c csi-snapshotter -n kube-system | grep -i "Error"
+    oc logs $pod -c csi-resizer -n kube-system | grep -i "Error"
+    oc logs $pod -c liveness-probe -n kube-system | grep -i "Error"
+    oc logs $pod -c azuredisk -n kube-system | grep -i "Error"
 done
 
 for pod in $(oc get pods -l app=csi-azuredisk-node -n kube-system -o custom-columns=:metadata.name)
 do
 	oc describe pod $pod -n kube-system | grep -i "Error"
     oc logs $pod -c liveness-probe -n kube-system #| grep -i "Error"
-    oc logs $pod -c node-driver-registrar # | grep -i "Error"
+    oc logs $pod -c node-driver-registrar -n kube-system # | grep -i "Error"
     oc logs $pod -c azuredisk -n kube-system # | grep -i "Error"
 done
 ```
@@ -158,6 +241,21 @@ oc exec -it nginx-azuredisk -- bash
 # /mnt/azuredisk directory should mounted as disk filesystem
 ```
 
+## Snapshot
+
+To be tested !
+```sh
+oc get pvc azure-managed-disk
+NAME                 STATUS    VOLUME                                     CAPACITY   ACCESS MODES   STORAGECLASS      AGE
+azure-managed-disk   Bound     pvc-XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXX      5Gi        RWO            managed-premium   3m
+
+$pv1=`az disk list --query '[].id | [?contains(@,`pvc-XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXX`)]' -o tsv`
+/subscriptions/<guid>/resourceGroups/MC_MYRESOURCEGROUP_MYAKSCLUSTER_EASTUS/providers/MicrosoftCompute/disks/kubernetes-dynamic-pvc-XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXX
+
+az snapshot create --name PV1Snapsho --source $pv1 -g $rg_name
+
+```
+
 # Clean-Up
 
 ```sh
@@ -173,7 +271,7 @@ az disk delete --name aro-dsk -g $rg_name -y
 oc get no --show-labels | grep topo
 
 # Uninstall Driver : 
-curl -skSL https://raw.githubusercontent.com/kubernetes-sigs/azuredisk-csi-driver/v0.7.0/deploy/uninstall-driver.sh | bash -s v0.7.0 --
+curl -skSL https://raw.githubusercontent.com/kubernetes-sigs/azuredisk-csi-driver/$driver_version/deploy/uninstall-driver.sh | bash -s $driver_version --
 oc delete StorageClass disk.csi.azure.com
 oc delete pvc pvc-azuredisk
 

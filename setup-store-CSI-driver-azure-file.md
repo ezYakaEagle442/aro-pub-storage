@@ -16,7 +16,7 @@ See :
 
 The driver initialization depends on a Cloud provider config file, usually it's /etc/kubernetes/azure.json on all kubernetes nodes deployed by AKS or aks-engine, here is azure.json example. This driver also supports read cloud config from kuberenetes secret.
 
-<span style="color:red">/!\ IMPORTANT </span> : in OpenShift the creds file is located in **“/etc/kubernetes/cloud.conf”**, so you would need to replace the path in the deployment for the driver from “/etc/kubernetes/azure.json” to “/etc/kubernetes/cloud.conf”, issue #[xxx](xxxxx) logged.
+<span style="color:red">/!\ IMPORTANT </span> : in OpenShift the creds file is located in **“/etc/kubernetes/cloud.conf”**, so you would need to replace the path in the deployment for the driver from “/etc/kubernetes/azure.json” to “/etc/kubernetes/cloud.conf”, issue #[https://github.com/kubernetes-sigs/azurefile-csi-driver/issues/282](https://github.com/kubernetes-sigs/azurefile-csi-driver/issues/282) logged.
 
 ```sh
 
@@ -33,23 +33,39 @@ echo "Azure Cloud Provider config secret " $azure_cnf_secret
 azure_cnf_secret_length=$(echo -n $azure_cnf_secret | wc -c)
 echo "Azure Cloud Provider config secret length " $azure_cnf_secret_length
 
-aadClientId="${azure_cnf_secret:14:35}"
+aadClientId="${azure_cnf_secret:13:36}"
 echo "aadClientId " $aadClientId
 
-aadClientSecret="${azure_cnf_secret:53:$azure_cnf_secret_length}"
+aadClientSecret="${azure_cnf_secret:67:$azure_cnf_secret_length}"
 echo "aadClientSecret" $aadClientSecret
 
-echo -e "{\n"\
-"\""tenantId\"": \""$tenantId\"",\n"\
-"\""subscriptionId\"": \""$subId\"",\n"\
-"\""resourceGroup\"": \""$rg_name\"",\n"\
-"\""useManagedIdentityExtension\"": false,\n"\
-"\""aadClientId\"": \""$aadClientId\"",\n"\
-"\""aadClientSecret\"": \""$aadClientSecret\""\n"\
-"}\n"\
-> deploy/azure.json
+subId=$(az account show --query id)
+echo "subscription ID :" $subId
 
-cat deploy/azure.json
+tenantId=$(az account show --query tenantId -o tsv)
+
+managed_rg=$(az aro show -n $cluster_name -g $rg_name --query 'clusterProfile.resourceGroupId' -o tsv)
+echo "ARO Managed Resource Group : " $managed_rg
+
+managed_rg_name=`echo -e $managed_rg | cut -d  "/" -f5`
+echo "ARO RG Name" $managed_rg_name
+
+# /§\ IMPORTANT : the resourceGroup is the ARO Cluster managed RG
+# "resourceGroup": "rg-managed-cluster-aropub-francecentral",
+# "vnetResourceGroup": "rg-aropub-francecentral",
+
+cat <<EOF >> deploy/cloud.conf
+{
+"tenantId": "$tenantId",
+"subscriptionId": $subId,
+"resourceGroup": "$managed_rg_name",
+"useManagedIdentityExtension": false,
+"aadClientId": "$aadClientId",
+"aadClientSecret": "$aadClientSecret"
+}
+EOF
+
+cat deploy/cloud.conf
 
 
 # https://github.com/kubernetes-sigs/azurefile-csi-driver/blob/master/deploy/csi-azurefile-node.yaml#L17
@@ -61,7 +77,21 @@ oc describe scc privileged
 # Install the Azure File CSI Driver
 
 ```sh
-curl -skSL https://raw.githubusercontent.com/kubernetes-sigs/azurefile-csi-driver/v0.6.0/deploy/install-driver.sh | bash -s v0.6.0 --
+
+oc apply -f ./cnf/cloud-cfg-test-pod.yaml
+oc describe pvc test-host-pvc
+oc describe pv test-host-pv
+oc describe pod test-pod
+oc get po
+oc exec -it test-pod -- cat /mnt/k8s/cloud.conf
+
+oc create configmap azure-cred-file --from-literal=path="/etc/kubernetes/cloud.conf" -n kube-system
+oc get cm -n kube-system
+oc describe cm azure-cred-file -n kube-system
+
+driver_version=master #vv0.9.0
+echo "Driver version " $driver_version
+curl -skSL https://raw.githubusercontent.com/kubernetes-sigs/azurefile-csi-driver/$driver_version/deploy/install-driver.sh | bash -s $driver_version --
 
 oc get rolebinding -n kube-system | grep -i "azurefile"
 oc get role -n kube-system | grep -i "azurefile"
@@ -85,12 +115,12 @@ oc get events -n kube-system | grep -i "Error"
 for pod in $(oc get pods -l app=csi-azurefile-controller -n kube-system -o custom-columns=:metadata.name)
 do
 	oc describe pod $pod -n kube-system | grep -i "Error"
-	oc logs $pod csi-provisioner -n kube-system | grep -i "Error"
-    oc logs $pod csi-attacher -n kube-system | grep -i "Error"
-    oc logs $pod csi-snapshotter -n kube-system | grep -i "Error"
-    oc logs $pod csi-resizer -n kube-system | grep -i "Error"
-    oc logs $pod liveness-probe -n kube-system | grep -i "Error"
-    oc logs $pod azurefile -n kube-system | grep -i "Error"
+	oc logs $pod -c csi-provisioner -n kube-system | grep -i "Error"
+    oc logs $pod -c csi-attacher -n kube-system | grep -i "Error"
+    oc logs $pod -c csi-snapshotter -n kube-system | grep -i "Error"
+    oc logs $pod -c csi-resizer -n kube-system | grep -i "Error"
+    oc logs $pod -c liveness-probe -n kube-system | grep -i "Error"
+    oc logs $pod -c azurefile -n kube-system | grep -i "Error"
 done
 
 for pod in $(oc get pods -l app=csi-azurefile-node -n kube-system -o custom-columns=:metadata.name)
@@ -122,7 +152,7 @@ oc create -f https://raw.githubusercontent.com/kubernetes-sigs/azurefile-csi-dri
 # Option 2: Static Provisioning(use an existing azure file share)
 # oc create -f https://raw.githubusercontent.com/kubernetes-sigs/azurefile-csi-driver/master/deploy/example/storageclass-azurefile-existing-share.yaml
 
-# Create a File
+# Create an Azure File
 str_name="stwefile""${appName,,}"
 az storage account create --name $str_name --kind FileStorage --sku Premium_ZRS --location $location -g $rg_name 
 az storage account list -g $rg_name
@@ -131,6 +161,15 @@ fs_share_name=arofs
 az storage share create --name $fs_share_name --account-name $str_name
 az storage share list --account-name $str_name
 az storage share show --name $fs_share_name --account-name $str_name
+
+# https://docs.microsoft.com/en-us/azure/storage/files/storage-how-to-use-files-linux
+httpEndpoint=$(az storage account show --name $str_name -g $rg_name --query "primaryEndpoints.file" | tr -d '"')
+smbPath=$(echo $httpEndpoint | cut -c7-$(expr length $httpEndpoint))$fs_share_name
+storageAccountKey=$(az storage account keys list --account-name $str_name -g $rg_name --query "[0].value" | tr -d '"')
+
+echo "httpEndpoint" $httpEndpoint 
+echo "smbPath" $smbPath 
+echo "storageAccountKey" $storageAccountKey 
 
 export RESOURCE_GROUP=$rg_name
 export STORAGE_ACCOUNT_NAME=$str_name
@@ -163,6 +202,6 @@ oc delete pvc pvc-azurefile
 oc delete pv pv-azurefile
 oc delete pods xxx
 
-curl -skSL https://raw.githubusercontent.com/kubernetes-sigs/azurefile-csi-driver/v0.6.0/deploy/uninstall-driver.sh | bash -s --
+curl -skSL https://raw.githubusercontent.com/kubernetes-sigs/azurefile-csi-driver/$driver_version/deploy/uninstall-driver.sh | bash -s --
 
 ```
