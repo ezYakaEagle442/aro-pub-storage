@@ -258,12 +258,14 @@ oc describe sc blob.csi.azure.com
 
 Install it from the ARO Console / OperatorHub
 
- the PVC storage class desired to be used for System's FileStorage PVC through the .spec.system.fileStorage.persistentVolumeClaim.storageClassName attribute for the [APIManager custom resource](https://github.com/3scale/3scale-operator/blob/3scale-2.9.1-GA/doc/apimanager-reference.md#SystemPVCSpec) : goto to API Manager / Create APIManager / System / File Storage / Persistent Volume Claim / storageClassName
+ the PVC storage class desired to be used for System's FileStorage PVC through the .spec.system.fileStorage.persistentVolumeClaim.storageClassName attribute for the [API Manager custom resource](https://github.com/3scale/3scale-operator/blob/3scale-2.9.1-GA/doc/apimanager-reference.md#SystemPVCSpec) : goto to API Manager / Create APIManager / System / File Storage / Persistent Volume Claim / storageClassName
+
+ ![Storage-Class Setting in API Manager](./img/3Scale_APIM_StorageClass_setting.png)
 
 ```sh
 for pod in $(oc get pods -l com.redhat.component-name=3scale-operator -o custom-columns=:metadata.name)
 do
-	oc describe pod $pod | grep -i "Error"
+	  oc describe pod $pod | grep -i "Error"
     oc describe pod $pod | grep -i "BLOB"
     oc describe pod $pod | grep -i "File"
     oc describe pod $pod | grep -i "Azure"
@@ -275,7 +277,7 @@ done
 
 for pod in $(oc get pods -l openshift.io/deployer-pod-for.name=system-mysql-1 -o custom-columns=:metadata.name)
 do
-	oc describe pod $pod | grep -i "Error"
+	  oc describe pod $pod | grep -i "Error"
     oc describe pod $pod | grep -i "BLOB"
     oc describe pod $pod | grep -i "File"
     oc describe pod $pod | grep -i "Azure"
