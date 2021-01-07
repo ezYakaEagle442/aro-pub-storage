@@ -289,4 +289,7 @@ done
 
 oc get pvc
 oc get pv
+
+oc describe pvc system-redis-storage
+
 ```
