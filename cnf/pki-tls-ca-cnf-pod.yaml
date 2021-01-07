@@ -32,11 +32,8 @@ metadata:
   name: pki-tls-ca-cnf-pod
 spec:
   securityContext:
-    priviledged: true
     runAsUser: 0
     runAsGroup: 0
-    privileged: true
-    allowPrivilegeEscalation: true    
   volumes:
     - name: test-pv-storage
       persistentVolumeClaim:
@@ -50,5 +47,9 @@ spec:
       volumeMounts:
         - mountPath: "/mnt/pki"
           name: test-pv-storage
-
+      securityContext:
+        privileged: false
+        allowPrivilegeEscalation: true
+        readOnlyRootFilesystem: false
+        
 

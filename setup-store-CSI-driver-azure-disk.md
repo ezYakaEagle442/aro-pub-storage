@@ -74,7 +74,7 @@ oc get cm  azure-cred-file -n kube-system -o yaml
 oc adm policy add-scc-to-user privileged system:serviceaccount:kube-system:csi-azuredisk-node-sa
 oc describe scc privileged
 
-csi-azuredisk-controller-secret-role
+oc describe role csi-azuredisk-controller-secret-role -n kube-system
 oc describe role azure-creds-secret-reader -n kube-system
 oc describe rolebinding aro-cloud-provider-secret-read -n kube-system
 oc describe role aro-cloud-provider-secret-reader -n kube-system
@@ -123,14 +123,30 @@ cat /mnt/k8s/cloud.conf # /etc/kubernetes/azurestackcloud.json
 <span style="color:red">**/!\ IMPORTANT** </span> :  HOTFIX to workaround [issues #658](https://github.com/kubernetes-sigs/azuredisk-csi-driver/issues/658), to apply on ARO & OpenShift :
 
 You need to copy /etc/pki/tls/certs/ca-bundle.crt /etc/pki/tls/certs/ca-certificate.crt
+
+See [https://www.openshift.com/blog/managing-sccs-in-openshift](https://www.openshift.com/blog/managing-sccs-in-openshift)
 ```sh
+oc get scc --as system:admin
+oc describe scc hostaccess
+
+oc whoami
+oc get ClusterRoleBinding | grep -i "admin"
+oc describe ClusterRoleBinding cluster-admin
+oc describe ClusterRole cluster-admin
+
+oc adm policy add-scc-to-user hostaccess system:admin -n default
+# oc adm policy add-scc-to-user hostaccess kube:admin -n default
+# oc adm policy add-scc-to-user hostaccess root -n default
+oc describe scc hostaccess | grep -i "Access:"
+
 oc apply -f ./cnf/pki-tls-ca-cnf-pod.yaml
 oc describe pvc pki-tls-ca-cnf-pvc
 oc describe pv pki-tls-ca-cnf-pv
 oc describe pod pki-tls-ca-cnf-pod
 oc get po
+# oc rsh pki-tls-ca-cnf-pod
 oc exec -it pki-tls-ca-cnf-pod -- bash
-
+id
 ls -al /mnt/pki
 ls -al /mnt/pki/tls/certs/ca-bundle.crt
 cp /mnt/pki/tls/certs/ca-bundle.crt /mnt/pki/tls/certs/ca-certificate.crt
