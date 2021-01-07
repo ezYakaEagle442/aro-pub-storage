@@ -44,20 +44,32 @@ aadClientSecret="${azure_cnf_secret:67:$azure_cnf_secret_length}"
 echo "aadClientSecret" $aadClientSecret
 
 # See https://github.com/kubernetes-sigs/cloud-provider-azure/blob/master/docs/cloud-provider-config.md#auth-configs
-echo -e "{\n"\
-"\""tenantId\"": \""$tenantId\"",\n"\
-"\""subscriptionId\"": \""$subId\"",\n"\
-"\""resourceGroup\"": \""$rg_name\"",\n"\
-"\""useManagedIdentityExtension\"": false,\n"\
-"\""aadClientId\"": \""$aadClientId\"",\n"\
-"\""aadClientSecret\"": \""$aadClientSecret\""\n"\
-"}\n"\
-> deploy/cloud.conf
+# https://kubernetes-sigs.github.io/cloud-provider-azure/install/configs/#setting-azure-cloud-provider-from-kubernetes-secrets
+cat <<EOF >> deploy/cloud.conf
+{
+"tenantId": "$tenantId",
+"subscriptionId": $subId,
+"resourceGroup": "$managed_rg_name",
+"useManagedIdentityExtension": false,
+"aadClientId": "$aadClientId",
+"aadClientSecret": "$aadClientSecret"
+}
+EOF
 
 cat deploy/cloud.conf
+# oc create secret generic azure-cnf --from-file=deploy/cloud.conf -n kube-system
+# oc get secrets -n kube-system
+# oc describe secret azure-cnf -n kube-system
+export AZURE_CLOUD_SECRET=`cat deploy/cloud.conf | base64 | awk '{printf $0}'; echo`
+envsubst < ./cnf/azure-cloud-provider.yaml > deploy/azure-cloud-provider.yaml
+cat deploy/azure-cloud-provider.yaml
+
+k create -f ./deploy/azure-cloud-provider.yaml
+
+azure_cnf_secret=$(oc get secret azure-cnf -n kube-system -o jsonpath="{.cloud.conf}" | base64 --decode)
 
 # https://v1-16.docs.kubernetes.io/docs/tasks/configure-pod-container/configure-pod-configmap/#create-configmaps-from-files
-oc create configmap azure-cred-file -n kube-system --from-file="./deploy/cloud.conf"  
+oc create configmap azure-cred-file --from-literal=path="/etc/kubernetes/cloud.conf" -n kube-system
 oc get cm -n kube-system
 oc describe cm azure-cred-file -n kube-system
 oc get cm  azure-cred-file -n kube-system -o yaml
@@ -108,7 +120,7 @@ oc describe pod test-pod
 oc get po
 oc exec -it test-pod -- bash
 ls -al /mnt/k8s
-cat /mnt/k8s/cloud.conf
+cat /mnt/k8s/cloud.conf # /etc/kubernetes/azurestackcloud.json
 
 
 # https://unix.stackexchange.com/questions/203606/is-there-any-way-to-install-nano-on-coreos
@@ -142,7 +154,7 @@ cat /mnt/origin/kubeconfig
 
 # oc apply -f ./cnf/csi-azuredisk-controller.yaml
 
-driver_version=master #v0.7.0
+driver_version=master #v0.10.0
 echo "Driver version " $driver_version
 curl -skSL https://raw.githubusercontent.com/kubernetes-sigs/azuredisk-csi-driver/$driver_version/deploy/install-driver.sh | bash -s $driver_version --
 
