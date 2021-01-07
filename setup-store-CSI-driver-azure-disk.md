@@ -194,6 +194,15 @@ oc exec -it test-kube-cnf-pod -- bash
 ls -al /mnt/origin
 cat /mnt/origin/kubeconfig
 
+oc apply -f ./cnf/root-storage-test-pod.yaml
+oc describe pvc root-storage-pvc
+oc describe pv root-storage-pv
+oc describe pod root-storage-pod
+oc get po -o wide
+oc exec -it root-storage-pod -- bash
+ls -al /mnt/root
+cat /mnt/root/kubeconfig
+
 # oc apply -f ./cnf/csi-azuredisk-controller.yaml
 
 driver_version=master #v0.10.0
