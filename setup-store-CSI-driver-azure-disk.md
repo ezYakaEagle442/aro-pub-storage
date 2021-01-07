@@ -134,22 +134,34 @@ oc get ClusterRoleBinding | grep -i "admin"
 oc describe ClusterRoleBinding cluster-admin
 oc describe ClusterRole cluster-admin
 
+oc create serviceaccount pki-sa -n default
+oc adm policy add-cluster-role-to-user cluster-admin system:serviceaccount:default:pki-sa
+oc adm policy add-scc-to-user hostaccess -z pki-sa
+#oc adm policy add-scc-to-user hostaccess system:serviceaccount:default:pki-sa
+# oc adm policy add-scc-to-user privileged system:serviceaccount:default:pki-sa
+
 oc adm policy add-scc-to-user hostaccess system:admin -n default
 # oc adm policy add-scc-to-user hostaccess kube:admin -n default
 # oc adm policy add-scc-to-user hostaccess root -n default
-oc describe scc hostaccess | grep -i "Access:"
+oc describe scc hostaccess | grep -i "Users:"
 
 oc apply -f ./cnf/pki-tls-ca-cnf-pod.yaml
 oc describe pvc pki-tls-ca-cnf-pvc
 oc describe pv pki-tls-ca-cnf-pv
 oc describe pod pki-tls-ca-cnf-pod
 oc get po
+
+# Patch the Pod to run with the SA
+# oc patch po/pki-tls-ca-cnf-pod -p '{"spec":{"serviceAccountName": "pki-sa"}}'
+# oc describe pod pki-tls-ca-cnf-pod
+
 # oc rsh pki-tls-ca-cnf-pod
 oc exec -it pki-tls-ca-cnf-pod -- bash
 id
-ls -al /mnt/pki
+iid
 ls -al /mnt/pki/tls/certs/ca-bundle.crt
-cp /mnt/pki/tls/certs/ca-bundle.crt /mnt/pki/tls/certs/ca-certificate.crt
+# cp /mnt/pki/tls/certs/ca-bundle.crt /mnt/pki/tls/certs/ca-certificate.crt
+cp /mnt/pki/ca-trust/extracted/pem/tls-ca-bundle.pem /mnt/pki/tls/certs/ca-certificate.crt
 ls -al /mnt/pki/tls/certs
 
 

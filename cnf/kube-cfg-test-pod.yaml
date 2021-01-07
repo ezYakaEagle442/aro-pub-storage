@@ -30,6 +30,9 @@ kind: Pod
 metadata:
   name: test-kube-cnf-pod
 spec:
+  securityContext:
+    runAsUser: 0
+    runAsGroup: 0
   volumes:
     - name: test-kube-cfg-pv-storage
       persistentVolumeClaim:
@@ -43,5 +46,8 @@ spec:
       volumeMounts:
         - mountPath: "/mnt/origin"
           name: test-kube-cfg-pv-storage
-
+      securityContext:
+        privileged: true
+        allowPrivilegeEscalation: true
+        readOnlyRootFilesystem: false
 

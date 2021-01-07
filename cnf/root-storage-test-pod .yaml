@@ -1,7 +1,7 @@
 apiVersion: v1
 kind: PersistentVolume
 metadata:
-  name:  pki-tls-ca-cnf-pv
+  name: root-storage-pv
   labels:
     type: local
 spec:
@@ -11,15 +11,14 @@ spec:
   accessModes:
     - ReadWriteOnce
   hostPath:
-    path: "/etc/pki"
+    path: "/"
 ---
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name:  pki-tls-ca-cnf-pvc
+  name: root-storage-pvc
 spec:
   storageClassName: manual
-  volumeName:  pki-tls-ca-cnf-pv
   accessModes:
     - ReadWriteOnce
   resources:
@@ -29,28 +28,26 @@ spec:
 apiVersion: v1
 kind: Pod
 metadata:
-  name: pki-tls-ca-cnf-pod
+  name: root-storage-pod
 spec:
-  serviceAccountName: pki-sa
   securityContext:
     runAsUser: 0
     runAsGroup: 0
   volumes:
-    - name: test-pv-storage
+    - name: root-storage-pv-storage
       persistentVolumeClaim:
-        claimName:  pki-tls-ca-cnf-pvc
+        claimName: root-storage-pvc
   containers:
-    - name: pki-cnf
+    - name: test-container
       image: nginx
       ports:
         - containerPort: 80
           name: "http-server"
       volumeMounts:
-        - mountPath: "/mnt/pki"
-          name: test-pv-storage
+        - mountPath: "/mnt/root"
+          name: root-storage-pv-storage
       securityContext:
         privileged: true
         allowPrivilegeEscalation: true
         readOnlyRootFilesystem: false
-
 
