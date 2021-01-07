@@ -8,7 +8,7 @@ parameters:
   resourceGroup:  $RESOURCE_GROUP
   storageAccount: $STORAGE_ACCOUNT_NAME
   containerName:  $CONTAINER_NAME
-  server: SERVER_ADDRESS  # optional, provide a new address to replace default "accountname.blob.core.windows.net"
+  # server: SERVER_ADDRESS  # optional, provide a new address to replace default "accountname.blob.core.windows.net"
 reclaimPolicy: Retain  # if set as "Delete" container would be removed after pvc deletion
 volumeBindingMode: Immediate
 mountOptions:
