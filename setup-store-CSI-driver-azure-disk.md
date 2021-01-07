@@ -17,7 +17,7 @@ See :
 
 The driver initialization depends on a Cloud provider config file, usually it's /etc/kubernetes/azure.json on all kubernetes nodes deployed by AKS or aks-engine, here is azure.json example. This driver also supports read cloud config from kuberenetes secret.
 
-<span style="color:red">/!\ IMPORTANT </span> : In openshift the creds file is located in **“/etc/kubernetes/cloud.conf”**, so you would need to replace the path in the deployment for the driver from “/etc/kubernetes/azure.json” to “/etc/kubernetes/cloud.conf”, issue #[398](https://github.com/kubernetes-sigs/azuredisk-csi-driver/issues/398) logged.
+<span style="color:red">**/!\ IMPORTANT**</span> : In openshift the creds file is located in **“/etc/kubernetes/cloud.conf”**, so you would need to replace the path in the deployment for the driver from “/etc/kubernetes/azure.json” to “/etc/kubernetes/cloud.conf”, issue #[398](https://github.com/kubernetes-sigs/azuredisk-csi-driver/issues/398) logged.
 
 **To specify a different cloud provider config file, create azure-cred-file configmap before driver installation, e.g. for OpenShift, it's /etc/kubernetes/cloud.conf**
 
@@ -120,15 +120,16 @@ ls -al /mnt/k8s
 cat /mnt/k8s/cloud.conf # /etc/kubernetes/azurestackcloud.json
 ```
 
-**IMPORTANT** workaround HOTFIX to apply on ARO & OpenShift :
-See [https://github.com/kubernetes-sigs/azuredisk-csi-driver/issues/658](https://github.com/kubernetes-sigs/azuredisk-csi-driver/issues/658)
+<span style="color:red">**/!\ IMPORTANT** </span> :  HOTFIX to workaround [issues #658](https://github.com/kubernetes-sigs/azuredisk-csi-driver/issues/658), to apply on ARO & OpenShift :
+
+You need to copy /etc/pki/tls/certs/ca-bundle.crt /etc/pki/tls/certs/ca-certificate.crt
 ```sh
 oc apply -f ./cnf/pki-tls-ca-cnf-pod.yaml
 oc describe pvc pki-tls-ca-cnf-pvc
 oc describe pv pki-tls-ca-cnf-pv
 oc describe pod pki-tls-ca-cnf-pod
 oc get po
-oc exec -it pod pki-tls-ca-cnf-pod -- bash
+oc exec -it pki-tls-ca-cnf-pod -- bash
 
 ls -al /mnt/pki
 ls -al /mnt/pki/tls/certs/ca-bundle.crt

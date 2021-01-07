@@ -31,6 +31,12 @@ kind: Pod
 metadata:
   name: pki-tls-ca-cnf-pod
 spec:
+  securityContext:
+    priviledged: true
+    runAsUser: 0
+    runAsGroup: 0
+    privileged: true
+    allowPrivilegeEscalation: true    
   volumes:
     - name: test-pv-storage
       persistentVolumeClaim:
