@@ -201,7 +201,7 @@ oc describe pod root-storage-pod
 oc get po -o wide
 oc exec -it root-storage-pod -- bash
 ls -al /mnt/root
-cat /mnt/root/kubeconfig
+cat /mnt/root/etc/kubernetes/kubeconfig
 
 # oc apply -f ./cnf/csi-azuredisk-controller.yaml
 
