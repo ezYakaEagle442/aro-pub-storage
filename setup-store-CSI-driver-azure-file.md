@@ -66,6 +66,12 @@ cat <<EOF >> deploy/cloud.conf
 EOF
 
 cat deploy/cloud.conf
+export AZURE_CLOUD_SECRET=`cat deploy/cloud.conf | base64 | awk '{printf $0}'; echo`
+envsubst < ./cnf/azure-cloud-provider.yaml > deploy/azure-cloud-provider.yaml
+
+cat deploy/azure-cloud-provider.yaml
+oc apply -f ./deploy/azure-cloud-provider.yaml
+# azure_cnf_secret=$(oc get secret azure-cloud-provider -n kube-system -o jsonpath="{.data.cloud-config}" | base64 --decode)
 
 
 # https://github.com/kubernetes-sigs/azurefile-csi-driver/blob/master/deploy/csi-azurefile-node.yaml#L17
@@ -89,7 +95,7 @@ oc create configmap azure-cred-file --from-literal=path="/etc/kubernetes/cloud.c
 oc get cm -n kube-system
 oc describe cm azure-cred-file -n kube-system
 
-driver_version=master #vv0.9.0
+driver_version=master #vv0.10.0
 echo "Driver version " $driver_version
 curl -skSL https://raw.githubusercontent.com/kubernetes-sigs/azurefile-csi-driver/$driver_version/deploy/install-driver.sh | bash -s $driver_version --
 
@@ -178,18 +184,21 @@ export SHARE_NAME=$fs_share_name
 envsubst < ./cnf/storageclass-azurefile-existing-share.yaml > deploy/storageclass-azurefile-existing-share.yaml
 cat deploy/storageclass-azurefile-existing-share.yaml
 
-oc create -f ./cnf/storageclass-azurefile-existing-share.yaml
-oc create -f https://raw.githubusercontent.com/kubernetes-sigs/azurefile-csi-driver/master/deploy/example/pvc-azurefile-csi.yaml
+oc create -f ./deploy/storageclass-azurefile-existing-share.yaml
+#oc create -f https://raw.githubusercontent.com/kubernetes-sigs/azurefile-csi-driver/master/deploy/example/pvc-azurefile-csi.yaml
+oc create -f ./cnf/pvc-azurefile-csi.yaml
 
 # validate PVC status and create an nginx pod
-oc describe pvc pvc-azurefile -w
-oc create -f https://raw.githubusercontent.com/kubernetes-sigs/azurefile-csi-driver/master/deploy/example/nginx-pod-azurefile.yaml
+oc describe pvc pvc-azurefile
+#oc create -f https://raw.githubusercontent.com/kubernetes-sigs/azurefile-csi-driver/master/deploy/example/nginx-pod-azurefile.yaml
+oc create -f ./cnf/nginx-pod-azurefile.yaml
 
 # enter the pod container to do validation
-oc describe po nginx-azurefile -w
+oc describe po nginx-azurefile
 oc exec -it nginx-azurefile -- bash
 # /mnt/azurefile directory should be mounted as cifs filesystem
-
+ls -al /mnt/azurefile
+cat /mnt/azurefile/outfile
 ```
 
 ## Clean-Up
