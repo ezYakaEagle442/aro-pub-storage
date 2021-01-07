@@ -36,6 +36,8 @@ echo "subscription ID :" $subId
 az account set --subscription $subId
 az account show
 
+tenantId=$(az account show --query tenantId -o tsv)
+
 # if you run az cli out of cloudshell (ex: in WSL)
 az login --username xxx --tenant $tenantId
 
