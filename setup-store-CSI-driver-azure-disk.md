@@ -158,11 +158,21 @@ oc get po
 # oc rsh pki-tls-ca-cnf-pod
 oc exec -it pki-tls-ca-cnf-pod -- bash
 id
-iid
 ls -al /mnt/pki/tls/certs/ca-bundle.crt
 # cp /mnt/pki/tls/certs/ca-bundle.crt /mnt/pki/tls/certs/ca-certificate.crt
 cp /mnt/pki/ca-trust/extracted/pem/tls-ca-bundle.pem /mnt/pki/tls/certs/ca-certificate.crt
 ls -al /mnt/pki/tls/certs
+
+# quick & dirty hotfix as ARO has 3 Worker Nodes by default, this is not enough for more than 3 Nodes, does not support Autosclaing neither.
+oc apply -f ./cnf/pki-tls-ca-cnf-spread-pods-to-zones.yaml
+oc get po
+oc describe pod pki-tls-ca-zone-1
+oc describe pod pki-tls-ca-zone-2
+oc describe pod pki-tls-ca-zone-3
+
+oc exec -it pod pki-tls-ca-zone-1 -- cp /mnt/pki/ca-trust/extracted/pem/tls-ca-bundle.pem /mnt/pki/tls/certs/ca-certificate.crt
+oc exec -it pod pki-tls-ca-zone-2 -- cp /mnt/pki/ca-trust/extracted/pem/tls-ca-bundle.pem /mnt/pki/tls/certs/ca-certificate.crt
+oc exec -it pod pki-tls-ca-zone-3 -- cp /mnt/pki/ca-trust/extracted/pem/tls-ca-bundle.pem /mnt/pki/tls/certs/ca-certificate.crt
 
 
 # https://unix.stackexchange.com/questions/203606/is-there-any-way-to-install-nano-on-coreos

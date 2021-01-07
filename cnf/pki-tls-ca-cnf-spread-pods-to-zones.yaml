@@ -1,0 +1,84 @@
+---  
+apiVersion: v1
+kind: Pod
+metadata:
+  name: pki-tls-ca-zone-1
+spec:
+  securityContext:
+    runAsUser: 0
+    runAsGroup: 0
+  volumes:
+    - name: test-pv-storage
+      persistentVolumeClaim:
+        claimName:  pki-tls-ca-cnf-pvc
+  containers:
+  - name: pki-cnf
+    image: nginx
+    ports:
+      - containerPort: 80
+        name: "http-server"
+    volumeMounts:
+      - mountPath: "/mnt/pki"
+        name: test-pv-storage
+    securityContext:
+      privileged: true
+      allowPrivilegeEscalation: true
+      readOnlyRootFilesystem: false
+    nodenodeSelector:
+      topology.kubernetes.io/zone: westeurope-1
+---  
+apiVersion: v1
+kind: Pod
+metadata:
+  name: pki-tls-ca-zone-2
+spec:
+  securityContext:
+    runAsUser: 0
+    runAsGroup: 0
+  volumes:
+    - name: test-pv-storage
+      persistentVolumeClaim:
+        claimName:  pki-tls-ca-cnf-pvc
+  containers:
+  - name: pki-cnf
+    image: nginx
+    ports:
+      - containerPort: 80
+        name: "http-server"
+    volumeMounts:
+      - mountPath: "/mnt/pki"
+        name: test-pv-storage
+    securityContext:
+      privileged: true
+      allowPrivilegeEscalation: true
+      readOnlyRootFilesystem: false
+    nodenodeSelector:
+      topology.kubernetes.io/zone: westeurope-2
+---  
+apiVersion: v1
+kind: Pod
+metadata:
+  name: pki-tls-ca-zone-3
+spec:
+  securityContext:
+    runAsUser: 0
+    runAsGroup: 0
+  volumes:
+    - name: test-pv-storage
+      persistentVolumeClaim:
+        claimName:  pki-tls-ca-cnf-pvc
+  containers:
+  - name: pki-cnf
+    image: nginx
+    ports:
+      - containerPort: 80
+        name: "http-server"
+    volumeMounts:
+      - mountPath: "/mnt/pki"
+        name: test-pv-storage
+    securityContext:
+      privileged: true
+      allowPrivilegeEscalation: true
+      readOnlyRootFilesystem: false
+    nodenodeSelector:
+      topology.kubernetes.io/zone: westeurope-3
