@@ -63,6 +63,12 @@ cat <<EOF >> deploy/cloud.conf
 EOF
 
 cat deploy/cloud.conf
+export AZURE_CLOUD_SECRET=`cat deploy/cloud.conf | base64 | awk '{printf $0}'; echo`
+envsubst < ./cnf/azure-cloud-provider.yaml > deploy/azure-cloud-provider.yaml
+
+cat deploy/azure-cloud-provider.yaml
+oc apply -f ./deploy/azure-cloud-provider.yaml
+# azure_cnf_secret=$(oc get secret azure-cloud-provider -n kube-system -o jsonpath="{.data.cloud-config}" | base64 --decode)
 
 
 # https://github.com/kubernetes-sigs/azureblob-csi-driver/blob/master/deploy/csi-azureblob-node.yaml#L17
@@ -114,11 +120,9 @@ for pod in $(oc get pods -l app=csi-blob-controller -n kube-system -o custom-col
 do
 	oc describe pod $pod -n kube-system | grep -i "Error"
 	oc logs $pod -c csi-provisioner -n kube-system | grep -i "Error"
-    # oc logs $pod -c csi-attacher -n kube-system | grep -i "Error"
-    # oc logs $pod -c csi-snapshotter -n kube-system | grep -i "Error"
-    # oc logs $pod -c csi-resizer -n kube-system | grep -i "Error"
-    # oc logs $pod -c liveness-probe -n kube-system | grep -i "Error"
-    # oc logs $pod -c azureblob -n kube-system | grep -i "Error"
+    oc logs $pod -c csi-resizer -n kube-system | grep -i "Error"
+    oc logs $pod -c liveness-probe -n kube-system | grep -i "Error"
+    oc logs $pod -c blob -n kube-system | grep -i "Error"
 done
 
 for pod in $(oc get pods -l app=csi-blob-node -n kube-system -o custom-columns=:metadata.name)
@@ -138,8 +142,49 @@ it means that you have the cloud provider config file is not correctly set at /e
 
 
 ## Test Azure BLOB CSI Driver
-TBD
+
 [https://github.com/kubernetes-sigs/blob-csi-driver/blob/master/deploy/example/e2e_usage.md](https://github.com/kubernetes-sigs/blob-csi-driver/blob/master/deploy/example/e2e_usage.md)
+
+
+# Create strorage Class
+```sh
+# oc create -f https://raw.githubusercontent.com/kubernetes-sigs/blob-csi-driver/master/deploy/example/storageclass-blobfuse.yaml
+# Create a statefulset with volume mount
+# oc create -f https://raw.githubusercontent.com/kubernetes-sigs/blob-csi-driver/master/deploy/example/statefulset.yaml
+
+
+str_name="stweblob""${appName,,}"
+export AZURE_STORAGE_ACCOUNT=$str_name
+
+az storage account create --name $str_name --kind StorageV2 --sku Standard_LRS --location $location -g $rg_name 
+az storage account list -g $rg_name -o tsv
+
+httpEndpoint=$(az storage account show --name $str_name -g $rg_name --query "primaryEndpoints.blob" | tr -d '"')
+echo "httpEndpoint" $httpEndpoint 
+
+export AZURE_STORAGE_ACCESS_KEY=$(az storage account keys list --account-name $str_name -g $rg_name --query "[0].value" | tr -d '"')
+echo "storageAccountKey" $AZURE_STORAGE_ACCESS_KEY 
+
+blob_bucket_name=aroblob
+az storage container create --name $blob_bucket_name
+az storage container list --account-name $str_name
+az storage container show --name $blob_bucket_name --account-name $str_name
+
+
+export RESOURCE_GROUP=$rg_name
+export STORAGE_ACCOUNT_NAME=$str_name
+export CONTAINER_NAME=$blob_container_name
+
+envsubst < ./cnf/storageclass-blobfuse-existing-container.yaml > deploy/storageclass-blobfuse-existing-container.yaml
+cat deploy/storageclass-blobfuse-existing-container.yaml
+
+oc create -f ./deploy/storageclass-blobfuse-existing-container.yaml
+
+oc get po
+oc exec -it statefulset-blob-0 -- bash
+df -h
+
+```
 
 ## Clean-Up
 ```sh
