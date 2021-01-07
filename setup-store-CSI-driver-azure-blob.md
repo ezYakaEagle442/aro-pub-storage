@@ -92,7 +92,7 @@ oc create configmap azure-cred-file --from-literal=path="/etc/kubernetes/cloud.c
 oc get cm -n kube-system
 oc describe cm azure-cred-file -n kube-system
 
-driver_version=master #vv0.10.0
+driver_version=master #vv0.11.0
 echo "Driver version " $driver_version
 curl -skSL https://raw.githubusercontent.com/kubernetes-sigs/blob-csi-driver/$driver_version/deploy/install-driver.sh | bash -s $driver_version --
 
@@ -151,7 +151,8 @@ it means that you have the cloud provider config file is not correctly set at /e
 # oc create -f https://raw.githubusercontent.com/kubernetes-sigs/blob-csi-driver/master/deploy/example/storageclass-blobfuse.yaml
 # Create a statefulset with volume mount
 # oc create -f https://raw.githubusercontent.com/kubernetes-sigs/blob-csi-driver/master/deploy/example/statefulset.yaml
-
+# oc get sts
+# oc exec -it statefulset-blob-0 -- bash
 
 str_name="stweblob""${appName,,}"
 export AZURE_STORAGE_ACCOUNT=$str_name
@@ -165,11 +166,10 @@ echo "httpEndpoint" $httpEndpoint
 export AZURE_STORAGE_ACCESS_KEY=$(az storage account keys list --account-name $str_name -g $rg_name --query "[0].value" | tr -d '"')
 echo "storageAccountKey" $AZURE_STORAGE_ACCESS_KEY 
 
-blob_bucket_name=aroblob
-az storage container create --name $blob_bucket_name
+blob_container_name=aroblob
+az storage container create --name $blob_container_name
 az storage container list --account-name $str_name
-az storage container show --name $blob_bucket_name --account-name $str_name
-
+az storage container show --name $blob_container_name --account-name $str_name
 
 export RESOURCE_GROUP=$rg_name
 export STORAGE_ACCOUNT_NAME=$str_name
@@ -179,11 +179,14 @@ envsubst < ./cnf/storageclass-blobfuse-existing-container.yaml > deploy/storagec
 cat deploy/storageclass-blobfuse-existing-container.yaml
 
 oc create -f ./deploy/storageclass-blobfuse-existing-container.yaml
+oc create -f https://raw.githubusercontent.com/kubernetes-sigs/blob-csi-driver/master/deploy/example/pvc-blob-csi.yaml
+oc create -f https://raw.githubusercontent.com/kubernetes-sigs/blob-csi-driver/master/deploy/example/nginx-pod-blob.yaml
 
 oc get po
-oc exec -it statefulset-blob-0 -- bash
+oc exec -it nginx-blob -- sh
 df -h
-
+ls -al /mnt/blob/outfile
+cat /mnt/blob/outfile
 ```
 
 ## Clean-Up
