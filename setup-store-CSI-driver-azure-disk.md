@@ -57,16 +57,13 @@ cat <<EOF >> deploy/cloud.conf
 EOF
 
 cat deploy/cloud.conf
-# oc create secret generic azure-cnf --from-file=deploy/cloud.conf -n kube-system
-# oc get secrets -n kube-system
-# oc describe secret azure-cnf -n kube-system
 export AZURE_CLOUD_SECRET=`cat deploy/cloud.conf | base64 | awk '{printf $0}'; echo`
 envsubst < ./cnf/azure-cloud-provider.yaml > deploy/azure-cloud-provider.yaml
+
 cat deploy/azure-cloud-provider.yaml
+oc apply -f ./deploy/azure-cloud-provider.yaml
+# azure_cnf_secret=$(oc get secret azure-cloud-provider -n kube-system -o jsonpath="{.data.cloud-config}" | base64 --decode)
 
-k create -f ./deploy/azure-cloud-provider.yaml
-
-azure_cnf_secret=$(oc get secret azure-cnf -n kube-system -o jsonpath="{.cloud.conf}" | base64 --decode)
 
 # https://v1-16.docs.kubernetes.io/docs/tasks/configure-pod-container/configure-pod-configmap/#create-configmaps-from-files
 oc create configmap azure-cred-file --from-literal=path="/etc/kubernetes/cloud.conf" -n kube-system
@@ -121,6 +118,22 @@ oc get po
 oc exec -it test-pod -- bash
 ls -al /mnt/k8s
 cat /mnt/k8s/cloud.conf # /etc/kubernetes/azurestackcloud.json
+```
+
+**IMPORTANT** workaround HOTFIX to apply on ARO & OpenShift :
+See [https://github.com/kubernetes-sigs/azuredisk-csi-driver/issues/658](https://github.com/kubernetes-sigs/azuredisk-csi-driver/issues/658)
+```sh
+oc apply -f ./cnf/pki-tls-ca-cnf-pod.yaml
+oc describe pvc pki-tls-ca-cnf-pvc
+oc describe pv pki-tls-ca-cnf-pv
+oc describe pod pki-tls-ca-cnf-pod
+oc get po
+oc exec -it pod pki-tls-ca-cnf-pod -- bash
+
+ls -al /mnt/pki
+ls -al /mnt/pki/tls/certs/ca-bundle.crt
+cp /mnt/pki/tls/certs/ca-bundle.crt /mnt/pki/tls/certs/ca-certificate.crt
+ls -al /mnt/pki/tls/certs
 
 
 # https://unix.stackexchange.com/questions/203606/is-there-any-way-to-install-nano-on-coreos
