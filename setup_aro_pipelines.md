@@ -87,6 +87,23 @@ oc get route vote-ui --template='http://{{.spec.host}}'
 
 ## Create a Pipeline to deploy Azure PaaS services
 
+# Pre-req : create a Service Principal to Signin to az CLI
+```sh
+azcli_sp_password=$(az ad sp create-for-rbac --name tkn-pipeline --role contributor --query password -o tsv)
+echo $azcli_sp_password > azcli_tkn_sp_password.txt
+echo "Service Principal Password saved to ./tkn_azcli_sp_password.txt IMPORTANT Keep your password ..." 
+# azcli_sp_password=`cat azcli_tkn_sp_password.txt`
+azcli_sp_id=$(az ad sp show --id http://tkn-pipeline --query appId -o tsv)
+#azcli_sp_id=$(az ad sp list --all --query "[?appDisplayName=='tkn-pipeline'].{appId:appId}" --output tsv)
+#azcli_sp_id=$(az ad sp list --show-mine --query "[?appDisplayName=='tkn-pipeline'].{appId:appId}" -o tsv)
+echo "Tekton Service Principal ID:" $azcli_sp_id 
+echo $azcli_sp_id > azcli_tkn_sp_id.txt
+# azcli_sp_id=`cat azcli_tkn_sp_id.txt`
+az ad sp show --id $azcli_sp_id
+
+tenantId=$(az account show --query tenantId -o tsv)
+```
+
 
 ```sh
 oc create -f ./cnf/arm_deploy_task.yaml
@@ -105,12 +122,15 @@ tkn pipeline start arm-deploy \
     -p DB_SERVER_NAME=pgsql_flyingblue \
     -p ADM_LOGIN=sky_adm \
     -p ADM_PWD=SkyIsTheLimit200! \
-    -p ARM_RG_LOCATION=francecentral
+    -p ARM_RG_LOCATION=francecentral \
+    -p AZ_CLI_SP_NAME=$azcli_sp_id \
+    -p AZ_CLI_SP_PWD=$azcli_sp_password \
+    -p AZ_TENANT=$tenantId
 
 tkn pipelinerun ls
 
 # To Test AZ CLI image : 
-# oc run azclipod --image=mcr.microsoft.com/azure-cli:latest --restart=Never -- sleep 3600
+# oc run az --image=mcr.microsoft.com/azure-cli:latest --restart=Never -- sleep 3600
 # oc exec -it azclipod -- /bin/bash
 # az version
 

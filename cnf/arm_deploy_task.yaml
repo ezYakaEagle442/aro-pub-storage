@@ -33,7 +33,16 @@ spec:
     - name: ADM_PWD
       description: The Admin password
       type: string
-      default: "ARM-PieceOfChocolate!"                
+      default: "ARM-PieceOfChocolate!" 
+    - name: AZ_CLI_SP_NAME
+      description: Tekton Service Principal Name to use to Signin to AZ CLI
+      type: string
+    - name: AZ_CLI_SP_PWD
+      description: Tekton Service Principal Password
+      type: string
+    - name: AZ_TENANT
+      description: Azure Tenant
+      type: string                   
   steps:
     - name: check-params
       image: bash:latest
@@ -46,8 +55,12 @@ spec:
           
           echo Creating directory for ARM Template $iac from https://github.com/$arm_template_root
           mkdir  $iac
-          wget  https://raw.githubusercontent.com/$arm_template_root/master/$iac/azuredeploy.parameters.json -o $iac/azuredeploy.parameters.json
+          ls -al $iac
+          wget  https://raw.githubusercontent.com/$arm_template_root/master/$iac/azuredeploy.parameters.json -O $iac/azuredeploy.parameters.json
           
+          echo Checking Directory $iac
+          ls -al $iac
+
           arm_rg_name=$(inputs.params.ARM_RG_NAME)
           arm_deployment_name=$(inputs.params.DEPLOYMENT_GRP)
           db_usr=$(inputs.params.ADM_LOGIN)
@@ -62,12 +75,11 @@ spec:
           echo db_pwd=$db_pwd
           echo location=$location
 
-          sed -i  $iac/azuredeploy.parameters.json -e "s/\(^.*GEN-UNIQUE: \).*/\1${db_server}/gI"
-          sed -i  $iac/azuredeploy.parameters.json -e "s/\(^.*GEN-UNIQUE-8: \).*/\1${db_usr}/gI"
-          sed -i  $iac/azuredeploy.parameters.json -e "s/\(^.*GEN-PASSWORD: \).*/\1${db_pwd}/gI"
+          sed -i  $iac/azuredeploy.parameters.json -e "s/\GEN-UNIQUE/\1${db_server}/I"
+          sed -i  $iac/azuredeploy.parameters.json -e "s/\GEN-UNIQUE-8/\1${db_usr}/I"
+          sed -i  $iac/azuredeploy.parameters.json -e "s/\GEN-PASSWORD/\1${db_pwd}/I"
 
           cat  $iac/azuredeploy.parameters.json
-          az version
 
           echo -----------------------------------
     - name: deploy-db
@@ -81,7 +93,9 @@ spec:
           
           mkdir  $iac
           # curl  https://raw.githubusercontent.com/$arm_template_root/master/$iac/azuredeploy.json -o $iac/azuredeploy.json
-          curl  https://raw.githubusercontent.com/$arm_template_root/master/$iac/azuredeploy.parameters.json -o $iac/azuredeploy.parameters.json
+          # curl  https://raw.githubusercontent.com/$arm_template_root/master/$iac/azuredeploy.parameters.json -o $iac/azuredeploy.parameters.json
+          ls -al  $iac
+          cat  $iac/azuredeploy.parameters.json
           
           arm_rg_name=$(inputs.params.ARM_RG_NAME)
           arm_deployment_name=$(inputs.params.DEPLOYMENT_GRP)
@@ -89,6 +103,14 @@ spec:
           db_pwd=$(inputs.params.ADM_PWD)
           db_server=$(inputs.params.DB_SERVER_NAME)
           location=$(inputs.params.ARM_RG_LOCATION)
+
+          az_spn=$(inputs.params.AZ_CLI_SP_NAME)
+          az_pwd=$(inputs.params.AZ_CLI_SP_PWD)
+          az_tenant=$(inputs.params.AZ_TENANT)
+
+          # https://docs.microsoft.com/en-us/cli/azure/authenticate-azure-cli
+          Sign in CLI with a Service Principal
+          az login --service-principal -u $az_spn -p $az_pwd --tenant $az_tenant
 
           Creating ResourceGroup $arm_rg_name
           az group create --name $arm_rg_name --location $location

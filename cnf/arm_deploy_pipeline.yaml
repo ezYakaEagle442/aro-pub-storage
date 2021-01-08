@@ -34,6 +34,15 @@ spec:
       description: The Admin password
       type: string
       default: "ARM-PieceOfChocolate!" 
+    - name: AZ_CLI_SP_NAME
+      description: Tekton Service Principal Name to use to Signin to AZ CLI
+      type: string
+    - name: AZ_CLI_SP_PWD
+      description: Tekton Service Principal Password
+      type: string
+    - name: AZ_TENANT
+      description: Azure Tenant
+      type: string                
   tasks:
   - name: deploy-azure-paas
     taskRef:
