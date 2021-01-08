@@ -182,8 +182,35 @@ oc exec -it pod pki-tls-ca-zone-3 -- cp /mnt/pki/ca-trust/extracted/pem/tls-ca-b
 # DaemonSet
 oc apply -f ./cnf/pki-tls-ca-cnf-ds.yaml
 oc get ds -o wide
-oc get po -l k8s-app=pki-tls-ca
-oc exec -it pod pki-tls-ca-XXXXXXX -- sh ls -al /mnt/pki/tls/certs
+oc get po -l name=pki-tls-ca -o wide
+
+for pod in $(oc get po -l name=pki-tls-ca -o custom-columns=:metadata.name)
+do
+    node=$(oc get po $pod -o custom-columns=:spec.nodeName)
+    echo "Checking pod on node " $node
+    echo ""
+    # oc exec -it $pod -- cp /mnt/pki/ca-trust/extracted/pem/tls-ca-bundle.pem /mnt/pki/tls/certs/ca-certificate.crt
+    oc exec -it $pod -- ls -al /mnt/pki/tls/certs
+    echo ""
+done
+
+#  it looks like the Driver still look for the CA certs. at /etc/ssl/certs , in fact the issue there is that the Intermediate CA "DigiCert SHA2 Secure Server CA" is missing at at/etc/ssl/certs : the X509 error is about the certificate "login.microsoftonline-int.com" delivered on 06 Oct. 2020 by "DigiCert SHA2 Secure Server CA" which parent is "DigiCert Global Root CA"
+# Hotfix 2 : manually import that missing CA Certificate to all Hosts
+
+# Check the Certificate with https://www.sslshopper.com/certificate-decoder.html
+# openssl x509 -in certificate.crt -text -noout
+
+for pod in $(oc get po -l name=root-storage-pod -o custom-columns=:metadata.name)
+do
+    node=$(oc get po $pod -o custom-columns=:spec.nodeName)
+    echo "About to apply CA Certificate Hotfix from pod on Node " $node
+    echo ""
+    oc exec -it $pod -- wget https://raw.githubusercontent.com/ezYakaEagle442/aro-pub-storage/master/cnf/DigiCert_SHA2_Secure_Server_CA.cer
+    oc exec -it $pod -- cp DigiCert_SHA2_Secure_Server_CA.cer /mnt/root/etc/ssl/certs
+    oc exec -it $pod -- ls -al /mnt/root/etc/ssl/certs
+    echo ""
+done
+
 
 
 # https://unix.stackexchange.com/questions/203606/is-there-any-way-to-install-nano-on-coreos
@@ -299,6 +326,7 @@ oc create -f https://raw.githubusercontent.com/kubernetes-sigs/azuredisk-csi-dri
 # wget https://raw.githubusercontent.com/kubernetes-sigs/azuredisk-csi-driver/master/deploy/example/pv-azuredisk-csi.yaml > ./cnf/pv-static-azuredisk-csi.yaml
 
 # Create a disk
+# https://docs.microsoft.com/en-us/cli/azure/disk?view=azure-cli-latest
 az disk create --name aro-dsk --sku Premium_LRS --size-gb 5 --zone 1 --location $location -g $rg_name 
 az disk list -g $rg_name
 disk_id=$(az disk show --name aro-dsk -g $rg_name --query id)
@@ -336,7 +364,21 @@ azure-managed-disk   Bound     pvc-XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXX      5Gi  
 $pv1=`az disk list --query '[].id | [?contains(@,`pvc-XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXX`)]' -o tsv`
 /subscriptions/<guid>/resourceGroups/MC_MYRESOURCEGROUP_MYAKSCLUSTER_EASTUS/providers/MicrosoftCompute/disks/kubernetes-dynamic-pvc-XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXX
 
+# https://docs.microsoft.com/en-us/cli/azure/snapshot?view=azure-cli-latest
 az snapshot create --name PV1Snapsho --source $pv1 -g $rg_name
+
+#Get the snapshot Id 
+snapshotId=$(az snapshot show --name $snapshotName --resource-group $rg_name --query [id] -o tsv)
+
+# Create a new Managed Disks using the snapshot Id
+# https://docs.microsoft.com/en-us/previous-versions/azure/virtual-machines/scripts/virtual-machines-cli-sample-create-managed-disk-from-snapshot
+az disk create --name $osDiskName --sku $storageType --size-gb $diskSize --source $snapshotId --resource-group $resourceGroupName
+
+# https://docs.microsoft.com/en-us/azure/backup/tutorial-restore-disk?toc=/azure/virtual-machines/windows/toc.json&bc=/azure/virtual-machines/windows/breadcrumb/toc.json
+# https://docs.microsoft.com/en-us/azure/virtual-machines/linux/snapshot-copy-managed-disk
+
+#Create VM by attaching created managed disks as OS
+# az vm create --name $virtualMachineName --attach-os-disk $osDiskName --os-type $osType --resource-group $rg_name 
 
 ```
 

@@ -1,18 +1,18 @@
 apiVersion: apps/v1
 kind: DaemonSet
 metadata:
-  name: pki-tls-ca-ds
+  name: pki-tls-ca-root-ds
   namespace: default
   labels:
-    k8s-app: pki-tls-ca
+    k8s-app: pki-tls-ca-root
 spec:
   selector:
     matchLabels:
-      name: pki-tls-ca
+      name: pki-tls-ca-root
   template:
     metadata:
       labels:
-        name: pki-tls-ca
+        name: pki-tls-ca-root
     spec:
       tolerations:
       - key: node-role.kubernetes.io/worker
@@ -23,19 +23,19 @@ spec:
       volumes:
       - name: test-pv-storage
         persistentVolumeClaim:
-          claimName:  pki-tls-ca-cnf-pvc
+          claimName:  root-storage-pvc
       containers:
       - name: pki-cnf
         image: nginx
         command:
           - "/bin/sh"
           - "-c"
-          - while true; do cp /mnt/pki/ca-trust/extracted/pem/tls-ca-bundle.pem /mnt/pki/tls/certs/ca-certificate.crt; sleep 86400; done        
+          - while true; do wget https://raw.githubusercontent.com/ezYakaEagle442/aro-pub-storage/master/cnf/DigiCert_SHA2_Secure_Server_CA.cer; sleep 86400; done        
         ports:
           - containerPort: 80
             name: "http-server"
         volumeMounts:
-          - mountPath: "/mnt/pki"
+          - mountPath: "/mnt/root"
             name: test-pv-storage
         securityContext:
           privileged: true
