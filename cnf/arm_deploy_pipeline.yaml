@@ -67,3 +67,9 @@ spec:
       value: $(params.ADM_LOGIN)
     - name: ADM_PWD
       value: $(params.ADM_PWD)
+    - name: AZ_CLI_SP_NAME
+      value: $(params.AZ_CLI_SP_NAME)
+    - name: AZ_CLI_SP_PWD
+      value: $(params.AZ_CLI_SP_PWD)
+    - name: AZ_TENANT
+      value: $(params.AZ_TENANT)
