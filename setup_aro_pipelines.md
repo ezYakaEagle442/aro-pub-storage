@@ -91,10 +91,12 @@ oc get route vote-ui --template='http://{{.spec.host}}'
 ```sh
 oc create -f ./cnf/arm_deploy_task.yaml
 tkn task ls
+tkn task describe arm-db-deploy
 
 oc apply -f ./cnf/arm_deploy_pipeline.yaml
 tkn pipeline list
-
+tkn pipeline describe arm-deploy
+ 
 tkn pipeline start arm-deploy \
     -w name=arm-wip,volumeClaimTemplateFile=https://raw.githubusercontent.com/openshift/pipelines-tutorial/master/01_pipeline/03_persistent_volume_claim.yaml \
     -p ARM_TEMPLATE=101-managed-postgresql-with-vnet \
@@ -104,7 +106,7 @@ tkn pipeline start arm-deploy \
     -p ADM_LOGIN=sky_adm \
     -p ADM_PWD=SkyIsTheLimit200! \
     -p ARM_RG_LOCATION=francecentral
-    
+
 tkn pipelinerun ls
 
 ```

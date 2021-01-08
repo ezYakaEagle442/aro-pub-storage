@@ -43,6 +43,7 @@ spec:
       workspace: shared-workspace
     # runAfter:
     # - z-previous-task
+    params:    
     - name: ARM_TEMPLATE
       value: $(params.ARM_TEMPLATE)
     - name: ARM_RG_NAME
