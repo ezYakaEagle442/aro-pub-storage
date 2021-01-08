@@ -40,7 +40,7 @@ spec:
       name: arm-db-deploy
     workspaces:
     - name: arm-wip
-      workspace: shared-workspace
+      workspace: arm-wip
     # runAfter:
     # - z-previous-task
     params:    
