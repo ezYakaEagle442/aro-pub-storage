@@ -38,7 +38,7 @@ spec:
     - name: check-params
       image: bash:latest
       workingDir: /workspace/arm-wip
-      command: ["/bin/bash", "-c"]
+      command: ["/usr/local/bin/bash", "-c"] # which bash ==> /usr/local/bin/bash
       args:
         - |-
           iac=$(inputs.params.ARM_TEMPLATE)
