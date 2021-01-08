@@ -44,10 +44,9 @@ spec:
           iac=$(inputs.params.ARM_TEMPLATE)
           arm_template_root=Azure/azure-quickstart-templates
           
-          echo About to deploy ARM Template $iac from https://github.com/$arm_template_root
+          echo Creating directory for ARM Template $iac from https://github.com/$arm_template_root
           mkdir  $iac
-          # curl  https://raw.githubusercontent.com/$arm_template_root/master/$iac/azuredeploy.json -o $iac/azuredeploy.json
-          curl  https://raw.githubusercontent.com/$arm_template_root/master/$iac/azuredeploy.parameters.json -o $iac/azuredeploy.parameters.json
+          wget  https://raw.githubusercontent.com/$arm_template_root/master/$iac/azuredeploy.parameters.json -o $iac/azuredeploy.parameters.json
           
           arm_rg_name=$(inputs.params.ARM_RG_NAME)
           arm_deployment_name=$(inputs.params.DEPLOYMENT_GRP)
@@ -77,7 +76,24 @@ spec:
       command: ["/bin/bash", "-c"]
       args:
         - |-
+          iac=$(inputs.params.ARM_TEMPLATE)
+          arm_template_root=Azure/azure-quickstart-templates
+          
+          mkdir  $iac
+          # curl  https://raw.githubusercontent.com/$arm_template_root/master/$iac/azuredeploy.json -o $iac/azuredeploy.json
+          curl  https://raw.githubusercontent.com/$arm_template_root/master/$iac/azuredeploy.parameters.json -o $iac/azuredeploy.parameters.json
+          
+          arm_rg_name=$(inputs.params.ARM_RG_NAME)
+          arm_deployment_name=$(inputs.params.DEPLOYMENT_GRP)
+          db_usr=$(inputs.params.ADM_LOGIN)
+          db_pwd=$(inputs.params.ADM_PWD)
+          db_server=$(inputs.params.DB_SERVER_NAME)
+          location=$(inputs.params.ARM_RG_LOCATION)
+
+          Creating ResourceGroup $arm_rg_name
           az group create --name $arm_rg_name --location $location
+
+          echo About to deploy ARM Template $iac from https://github.com/$arm_template_root
 
           az deployment group create \
           --resource-group $arm_rg_name \

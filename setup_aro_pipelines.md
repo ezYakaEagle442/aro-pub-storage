@@ -109,4 +109,13 @@ tkn pipeline start arm-deploy \
 
 tkn pipelinerun ls
 
+# To Test AZ CLI image : 
+# oc run azclipod --image=mcr.microsoft.com/azure-cli:latest --restart=Never -- sleep 3600
+# oc exec -it azclipod -- /bin/bash
+# az version
+
+# To Test bash:latest image : 
+# oc run bashpod --image=bash:latest --restart=Never -- sleep 3600
+# oc exec -it bashpod -- bash
+
 ```
