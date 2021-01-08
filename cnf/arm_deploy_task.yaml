@@ -96,7 +96,7 @@ spec:
           # curl  https://raw.githubusercontent.com/$arm_template_root/master/$iac/azuredeploy.parameters.json -o $iac/azuredeploy.parameters.json
           ls -al  $iac
           cat  $iac/azuredeploy.parameters.json
-          
+
           arm_rg_name=$(inputs.params.ARM_RG_NAME)
           arm_deployment_name=$(inputs.params.DEPLOYMENT_GRP)
           db_usr=$(inputs.params.ADM_LOGIN)
@@ -109,10 +109,10 @@ spec:
           az_tenant=$(inputs.params.AZ_TENANT)
 
           # https://docs.microsoft.com/en-us/cli/azure/authenticate-azure-cli
-          Sign in CLI with a Service Principal
+          echo Sign in CLI with a Service Principal
           az login --service-principal -u $az_spn -p $az_pwd --tenant $az_tenant
 
-          Creating ResourceGroup $arm_rg_name
+          echo Creating ResourceGroup $arm_rg_name
           az group create --name $arm_rg_name --location $location
 
           echo About to deploy ARM Template $iac from https://github.com/$arm_template_root

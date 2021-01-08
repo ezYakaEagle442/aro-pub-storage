@@ -114,12 +114,27 @@ oc apply -f ./cnf/arm_deploy_pipeline.yaml
 tkn pipeline list
 tkn pipeline describe arm-deploy
  
+# MariaDB
+tkn pipeline start arm-deploy \
+    -w name=arm-wip,volumeClaimTemplateFile=https://raw.githubusercontent.com/openshift/pipelines-tutorial/master/01_pipeline/03_persistent_volume_claim.yaml \
+    -p ARM_TEMPLATE=101-managed-mariadb-with-vnet \
+    -p ARM_RG_NAME=rg-arm-paas-db \
+    -p DEPLOYMENT_GRP=mariadb \
+    -p DB_SERVER_NAME=mariadb-flyingblue \
+    -p ADM_LOGIN=sky_adm \
+    -p ADM_PWD=MariaMariaFlyToTheMoon777! \
+    -p ARM_RG_LOCATION=francecentral \
+    -p AZ_CLI_SP_NAME=$azcli_sp_id \
+    -p AZ_CLI_SP_PWD=$azcli_sp_password \
+    -p AZ_TENANT=$tenantId
+
+# PostgreSQL
 tkn pipeline start arm-deploy \
     -w name=arm-wip,volumeClaimTemplateFile=https://raw.githubusercontent.com/openshift/pipelines-tutorial/master/01_pipeline/03_persistent_volume_claim.yaml \
     -p ARM_TEMPLATE=101-managed-postgresql-with-vnet \
     -p ARM_RG_NAME=rg-arm-paas-db \
     -p DEPLOYMENT_GRP=pgsql \
-    -p DB_SERVER_NAME=pgsql_flyingblue \
+    -p DB_SERVER_NAME=pgsql-flyingblue \
     -p ADM_LOGIN=sky_adm \
     -p ADM_PWD=SkyIsTheLimit200! \
     -p ARM_RG_LOCATION=francecentral \
