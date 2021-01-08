@@ -25,7 +25,8 @@ spec:
       allowPrivilegeEscalation: true
       readOnlyRootFilesystem: false
     nodenodeSelector:
-      topology.kubernetes.io/zone: westeurope-1
+      "topology.kubernetes.io/zone": "westeurope-1"
+      # "failure-domain.beta.kubernetes.io/zone": westeurope-1
 ---  
 apiVersion: v1
 kind: Pod
@@ -53,7 +54,7 @@ spec:
       allowPrivilegeEscalation: true
       readOnlyRootFilesystem: false
     nodenodeSelector:
-      topology.kubernetes.io/zone: westeurope-2
+      "topology.kubernetes.io/zone": "westeurope-2"
 ---  
 apiVersion: v1
 kind: Pod
@@ -81,4 +82,4 @@ spec:
       allowPrivilegeEscalation: true
       readOnlyRootFilesystem: false
     nodenodeSelector:
-      topology.kubernetes.io/zone: westeurope-3
+      "topology.kubernetes.io/zone": "westeurope-3"

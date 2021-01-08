@@ -1,0 +1,39 @@
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: pki-tls-ca-ds
+  namespace: default
+  labels:
+    k8s-app: pki-tls-ca
+spec:
+  selector:
+    matchLabels:
+      name: pki-tls-ca
+  template:
+    metadata:
+      labels:
+        name: pki-tls-ca
+    spec:
+      tolerations:
+      - key: node-role.kubernetes.io/worker
+        effect: NoSchedule
+      securityContext:
+      runAsUser: 0
+      runAsGroup: 0
+      volumes:
+      - name: test-pv-storage
+        persistentVolumeClaim:
+          claimName:  pki-tls-ca-cnf-pvc
+      containers:
+      - name: pki-cnf
+        image: nginx
+        ports:
+          - containerPort: 80
+            name: "http-server"
+        volumeMounts:
+          - mountPath: "/mnt/pki"
+            name: test-pv-storage
+        securityContext:
+          privileged: true
+          allowPrivilegeEscalation: true
+          readOnlyRootFilesystem: false
