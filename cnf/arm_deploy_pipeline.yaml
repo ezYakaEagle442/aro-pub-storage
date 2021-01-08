@@ -1,0 +1,59 @@
+apiVersion: tekton.dev/v1beta1
+kind: Pipeline
+metadata:
+  name: arm-deploy
+spec:
+  workspaces:
+  - name: arm-wip
+  params:
+    - name: ARM_TEMPLATE
+      description: The Azure Quickstart template to use from https://github.com/Azure/azure-quickstart-templates
+      type: string
+      default: "101-managed-mariadb-with-vnet"
+    - name: ARM_RG_NAME
+      description: The ResourceGroup to deploy the Azure Resources
+      type: string
+      default: "rg-arm-paas"
+    - name: ARM_RG_LOCATION
+      description: The ResourceGroup Location
+      type: string
+      default: "westeurope"      
+    - name: DEPLOYMENT_GRP
+      description: The ARM Deployment Group Name
+      type: string
+      default: "deploy-db"
+    - name: DB_SERVER_NAME
+      description: The Database server name
+      type: string
+      default: "my-oss-db"
+    - name: ADM_LOGIN
+      description: The Admin user name
+      type: string
+      default: "db-admin"
+    - name: ADM_PWD
+      description: The Admin password
+      type: string
+      default: "ARM-PieceOfChocolate!" 
+  tasks:
+  - name: deploy-azure-paas
+    taskRef:
+      name: arm-db-deploy
+    workspaces:
+    - name: arm-wip
+      workspace: shared-workspace
+    # runAfter:
+    # - z-previous-task
+    - name: ARM_TEMPLATE
+      value: $(params.ARM_TEMPLATE)
+    - name: ARM_RG_NAME
+      value: $(params.ARM_RG_NAME)
+    - name: ARM_RG_LOCATION
+      value: $(params.ARM_RG_LOCATION)
+    - name: DEPLOYMENT_GRP
+      value: $(params.DEPLOYMENT_GRP)
+    - name: DB_SERVER_NAME
+      value: $(params.DB_SERVER_NAME)
+    - name: ADM_LOGIN
+      value: $(params.ADM_LOGIN)
+    - name: ADM_PWD
+      value: $(params.ADM_PWD)

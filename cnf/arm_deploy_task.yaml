@@ -1,0 +1,88 @@
+apiVersion: tekton.dev/v1beta1
+kind: Task
+metadata:
+  name: arm-db-deploy
+spec:
+  workspaces:
+  - name: arm-wip
+  params:
+    - name: ARM_TEMPLATE
+      description: The Azure Quickstart template to use from https://github.com/Azure/azure-quickstart-templates
+      type: string
+      default: "101-managed-mariadb-with-vnet"
+    - name: ARM_RG_NAME
+      description: The ResourceGroup to deploy the Azure Resources
+      type: string
+      default: "rg-arm-paas"
+    - name: ARM_RG_LOCATION
+      description: The ResourceGroup Location
+      type: string
+      default: "westeurope"      
+    - name: DEPLOYMENT_GRP
+      description: The ARM Deployment Group Name
+      type: string
+      default: "deploy-db"
+    - name: DB_SERVER_NAME
+      description: The Database server name
+      type: string
+      default: "my-oss-db"
+    - name: ADM_LOGIN
+      description: The Admin user name
+      type: string
+      default: "db-admin"
+    - name: ADM_PWD
+      description: The Admin password
+      type: string
+      default: "ARM-PieceOfChocolate!"                
+  steps:
+    - name: check-params
+      image: bash:latest
+      workingDir: /workspace/arm-wip
+      command: ["/bin/bash", "-c"]
+      args:
+        - |-
+          iac=$(inputs.params.ARM_TEMPLATE)
+          arm_template_root=Azure/azure-quickstart-templates
+          
+          echo About to deploy ARM Template $iac from https://github.com/$arm_template_root
+          mkdir  $iac
+          # curl  https://raw.githubusercontent.com/$arm_template_root/master/$iac/azuredeploy.json -o $iac/azuredeploy.json
+          curl  https://raw.githubusercontent.com/$arm_template_root/master/$iac/azuredeploy.parameters.json -o $iac/azuredeploy.parameters.json
+          
+          arm_rg_name=$(inputs.params.ARM_RG_NAME)
+          arm_deployment_name=$(inputs.params.DEPLOYMENT_GRP)
+          db_usr=$(inputs.params.ADM_LOGIN)
+          db_pwd=$(inputs.params.ADM_PWD)
+          db_server=$(inputs.params.DB_SERVER_NAME)
+          location=$(inputs.params.ARM_RG_LOCATION)
+
+          echo arm_rg_name=$arm_rg_name
+          echo arm_deployment_name=$arm_deployment_name
+          echo db_server=$db_server
+          echo db_usr=$db_usr
+          echo db_pwd=$db_pwd
+          echo location=$location
+
+          sed -i  $iac/azuredeploy.parameters.json -e "s/\(^.*GEN-UNIQUE: \).*/\1${db_server}/gI"
+          sed -i  $iac/azuredeploy.parameters.json -e "s/\(^.*GEN-UNIQUE-8: \).*/\1${db_usr}/gI"
+          sed -i  $iac/azuredeploy.parameters.json -e "s/\(^.*GEN-PASSWORD: \).*/\1${db_pwd}/gI"
+
+          cat  $iac/azuredeploy.parameters.json
+          az version
+
+          echo -----------------------------------
+    - name: deploy-db
+      image: mcr.microsoft.com/azure-cli:latest
+      workingDir: /workspace/arm-wip
+      command: ["/bin/bash", "-c"]
+      args:
+        - |-
+          az group create --name $arm_rg_name --location $location
+
+          az deployment group create \
+          --resource-group $arm_rg_name \
+          --name $arm_deployment_name \
+          --template-uri https://raw.githubusercontent.com/$arm_template_root/master/$iac/azuredeploy.json \
+          --parameters $iac/azuredeploy.parameters.json
+
+          echo -----------------------------------

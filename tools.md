@@ -197,9 +197,32 @@ chmod 700 get_helm.sh
 
 ## Kubectl-Windows-Linux-Shell
 ```sh
-# https://github.com/mohatb/kubectl-wls
+# https://github.com/Azure/kubelogin : N/A on ARO
 
 ```
+
+## How to install Tekton CLI
+[https://github.com/tektoncd/cli](https://github.com/tektoncd/cli)
+
+### From Chocolatey
+```sh
+choco install tektoncd-cli --confirm
+```
+
+### From Linux AMD64 / WSL
+```sh
+tkn_version=0.15.0
+# Get the tar.xz
+curl -LO https://github.com/tektoncd/cli/releases/download/v$tkn_version/tkn_$tkn_version\_Linux_x86_64.tar.gz
+# Extract tkn to your PATH (e.g. /usr/local/bin)
+sudo tar xvzf tkn_$tkn_version\_Linux_x86_64.tar.gz -C /usr/local/bin/ tkn
+```
+
+### Mac
+```sh
+brew install tektoncd-cli
+```
+
 
 ## To run Docker in WSL
 The most important part is dockerd will only run on an elevated console (run as Admin) and cgroup should be always mounted before running the docker daemon.
