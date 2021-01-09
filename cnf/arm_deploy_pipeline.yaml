@@ -37,12 +37,15 @@ spec:
     - name: AZ_CLI_SP_NAME
       description: Tekton Service Principal Name to use to Signin to AZ CLI
       type: string
+      default: "XXX"
     - name: AZ_CLI_SP_PWD
       description: Tekton Service Principal Password # should be protected as a secret https://github.com/tektoncd/pipeline/blob/master/docs/resources.md
       type: string
+      default: "XXX"
     - name: AZ_TENANT
       description: Azure Tenant
-      type: string                
+      type: string
+      default: "XXX"            
   tasks:
   - name: init
     taskRef:
