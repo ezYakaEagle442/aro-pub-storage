@@ -27,7 +27,7 @@ spec:
       type: string
       default: "my-oss-db"
     - name: ADM_LOGIN
-      description: The Admin user name
+      description: The Admin user name, Maximum length is 16.
       type: string
       default: "db-admin"
     - name: ADM_PWD
