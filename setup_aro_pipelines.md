@@ -138,7 +138,7 @@ tkn pipeline start arm-deploy \
     -p ARM_TEMPLATE=101-managed-mariadb-with-vnet \
     -p ARM_RG_NAME=rg-arm-paas-db \
     -p DEPLOYMENT_GRP=mariadb \
-    -p DB_SERVER_NAME=maria-flyingblue \
+    -p DB_SERVER_NAME=mariadb-flyingblue \
     -p ADM_LOGIN=sky_adm \
     -p ADM_PWD=MariaMariaFlyToTheMoon777! \
     -p ARM_RG_LOCATION=francecentral \

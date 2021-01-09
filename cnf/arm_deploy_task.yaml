@@ -54,11 +54,13 @@ spec:
           arm_template_root=Azure/azure-quickstart-templates
           
           echo Creating directory for ARM Template $iac from https://github.com/$arm_template_root
-          mkdir  $iac
+          rm $iac/azuredeploy.parameters.json
+          rm -Rf $iac
+          mkdir $iac
           ls -al $iac
           wget  https://raw.githubusercontent.com/$arm_template_root/master/$iac/azuredeploy.parameters.json -O $iac/azuredeploy.parameters.json
           
-          echo Checking Directory $iac
+          echo Checking ARM Deployment parameters in Directory $iac
           ls -al $iac
 
           arm_rg_name=$(inputs.params.ARM_RG_NAME)
@@ -75,8 +77,9 @@ spec:
           echo db_pwd=$db_pwd
           echo location=$location
 
-          sed -i  $iac/azuredeploy.parameters.json -e "s/\GEN-UNIQUE/\1${db_server}/I"
+          echo About to replace parameters default values with the ones provided :
           sed -i  $iac/azuredeploy.parameters.json -e "s/\GEN-UNIQUE-8/\1${db_usr}/I"
+          sed -i  $iac/azuredeploy.parameters.json -e "s/\GEN-UNIQUE/\1${db_server}/I"
           sed -i  $iac/azuredeploy.parameters.json -e "s/\GEN-PASSWORD/\1${db_pwd}/I"
 
           cat  $iac/azuredeploy.parameters.json
