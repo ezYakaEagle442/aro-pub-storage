@@ -134,7 +134,7 @@ spec:
                exit 1
             else
               echo No error in ARM deployment
-              return 0
+              exit 0
           fi
 
           echo -----------------------------------
