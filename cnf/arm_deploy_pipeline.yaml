@@ -56,7 +56,8 @@ spec:
     workspaces:
     - name: arm-wip
       workspace: arm-wip
-    runAfter: init
+    runAfter: 
+      - init
     params:    
     - name: ARM_TEMPLATE
       value: $(params.ARM_TEMPLATE)
@@ -84,4 +85,5 @@ spec:
     workspaces:
     - name: arm-wip
       workspace: arm-wip
-    runAfter: deploy-azure-paas
+    runAfter: 
+      - deploy-azure-paas
