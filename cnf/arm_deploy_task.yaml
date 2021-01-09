@@ -124,3 +124,38 @@ spec:
           --parameters $iac/azuredeploy.parameters.json
 
           echo -----------------------------------
+---
+apiVersion: tekton.dev/v1beta1
+kind: Task
+metadata:
+  name: arm-db-pre-flight
+spec:
+  workspaces:
+  - name: arm-wip
+  steps:
+    - name: init
+      image: bash:latest
+      workingDir: /workspace/arm-wip
+      script: | 
+        #!/usr/local/bin/bash
+        echo "pre-flight init step ...""
+        # echo "I am supposed to sleep for 10 seconds!"      
+        sleep 10
+      timeout: 5s
+---
+apiVersion: tekton.dev/v1beta1
+kind: Task
+metadata:
+  name: arm-db-post-check
+spec:
+  workspaces:
+  - name: arm-wip
+  steps:
+    - name: landing
+      image: bash:latest
+      workingDir: /workspace/arm-wip
+      script: | 
+        #!/usr/local/bin/bash
+        echo "Post-provisionning check completed.""
+        sleep 10
+      timeout: 5s      

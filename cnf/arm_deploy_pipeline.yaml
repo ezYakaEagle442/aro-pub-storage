@@ -38,20 +38,25 @@ spec:
       description: Tekton Service Principal Name to use to Signin to AZ CLI
       type: string
     - name: AZ_CLI_SP_PWD
-      description: Tekton Service Principal Password
+      description: Tekton Service Principal Password # should be protected as a secret https://github.com/tektoncd/pipeline/blob/master/docs/resources.md
       type: string
     - name: AZ_TENANT
       description: Azure Tenant
       type: string                
   tasks:
+  - name: init
+    taskRef:
+      name: arm-db-pre-flight
+    workspaces:
+    - name: arm-wip
+      workspace: arm-wip
   - name: deploy-azure-paas
     taskRef:
       name: arm-db-deploy
     workspaces:
     - name: arm-wip
       workspace: arm-wip
-    # runAfter:
-    # - z-previous-task
+    runAfter: init
     params:    
     - name: ARM_TEMPLATE
       value: $(params.ARM_TEMPLATE)
@@ -73,3 +78,10 @@ spec:
       value: $(params.AZ_CLI_SP_PWD)
     - name: AZ_TENANT
       value: $(params.AZ_TENANT)
+  - name: post-check
+    taskRef:
+      name: arm-db-post-check
+    workspaces:
+    - name: arm-wip
+      workspace: arm-wip
+    runAfter: deploy-azure-paas

@@ -41,6 +41,9 @@ echo "ARO Service Principal Name: " $aro_spn
 managed_rg=$(az aro show -n $cluster_name -g $rg_name --query 'clusterProfile.resourceGroupId' -o tsv)
 echo "ARO Managed Resource Group : " $managed_rg
 
+managed_rg_name=`echo -e $managed_rg | cut -d  "/" -f5`
+echo "ARO RG Name" $managed_rg_name
+
 cat ~/.azure/accessTokens.json
 # You can have a look at the App. Registrations in the portal at https://ms.portal.azure.com/#blade/Microsoft_AAD_IAM/ActiveDirectoryMenuBlade/RegisteredApps
 
@@ -126,6 +129,10 @@ oc get ingresses  --all-namespaces
 
 oc create serviceaccount api-service-account
 oc apply -f ./cnf/clusterRole.yaml
+
+oc create serviceaccount api-service-account
+oc get sa api-service-account
+oc describe sa api-service-account
 
 sa_secret_name=$(oc get serviceaccount api-service-account  -o json | jq -Mr '.secrets[].name')
 echo "SA secret name " $sa_secret_name

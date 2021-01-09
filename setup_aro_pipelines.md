@@ -34,6 +34,19 @@ oc create serviceaccount pipeline
 oc get sa pipeline
 oc describe sa pipeline
 
+sa_secret_name=$(kubectl get serviceaccount pipeline -o json | jq -Mr '.secrets[].name')
+echo "SA secret name " $sa_secret_name
+
+# Openshift Cheatsheet: https://gist.github.com/rafaeltuelho/111850b0db31106a4d12a186e1fbc53e
+sa_secret_value=$(oc get secrets  $sa_secret_name -o json | jq -Mr '.items[1].data.token' | base64 -d)
+echo "SA secret  " $sa_secret_value
+
+kube_url=$(oc get endpoints -n default -o jsonpath='{.items[0].subsets[0].addresses[0].ip}')
+echo "Kube URL " $kube_url
+
+curl -k $aro_api_server_url/api/v1/namespaces -H "Authorization: Bearer $sa_secret_value" -H 'Accept: application/json'
+curl -k $aro_api_server_url/apis/user.openshift.io/v1/users/~ -H "Authorization: Bearer $sa_secret_value" -H 'Accept: application/json'
+
 oc adm policy add-scc-to-user privileged -z pipeline # system:serviceaccount:$projectname:pipeline
 # oc policy add-role-to-user registry-editor -z pipeline
 
@@ -106,6 +119,11 @@ tenantId=$(az account show --query tenantId -o tsv)
 
 
 ```sh
+
+# https://github.com/tektoncd/pipeline/blob/master/docs/pipelines.md#tekton-bundles : This is only allowed if enable-tekton-oci-bundles is set to "true"
+oc get cm feature-flags -n openshift-pipelines
+oc describe cm feature-flags -n openshift-pipelines
+
 oc create -f ./cnf/arm_deploy_task.yaml
 tkn task ls
 tkn task describe arm-db-deploy

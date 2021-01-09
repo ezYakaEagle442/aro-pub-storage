@@ -223,6 +223,8 @@ sudo tar xvzf tkn_$tkn_version\_Linux_x86_64.tar.gz -C /usr/local/bin/ tkn
 brew install tektoncd-cli
 ```
 
+source <(tkn completion bash)
+complete -F __start_tkn tkn
 
 ## To run Docker in WSL
 The most important part is dockerd will only run on an elevated console (run as Admin) and cgroup should be always mounted before running the docker daemon.
