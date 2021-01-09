@@ -120,11 +120,12 @@ spec:
           
           if [[ -n "$(echo $arm_result | grep -e "error" )" ]]
             then
-               echo ERROR in ARM deployment, EXIT
-               exit 1
-            else
               echo No error in ARM deployment
               exit 0
+            else
+              echo ERROR in ARM deployment: $(echo $arm_result | grep -e "message" )
+              echo EXIT 1
+              exit 1
           fi
 
           echo -----------------------------------
