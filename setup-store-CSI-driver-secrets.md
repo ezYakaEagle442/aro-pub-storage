@@ -64,7 +64,7 @@ az keyvault set-policy -n $vault_name --certificate-permissions get --spn $aro_c
 ```
 
 
-# Create an Azure User Identity
+# Configure & Deploy secretproviderclasses
 
 
 ```sh
@@ -76,20 +76,22 @@ export TENANT_ID=$tenantId
 export KV_NAME=$vault_name
 export SECRET_NAME=$vault_secret_name
 
+oc create secret generic secrets-store-creds --from-literal clientid=$aro_client_id --from-literal clientsecret=$aro_client_secret -n $target_namespace
+
 envsubst < ./cnf/secrets-store-csi-provider-class.yaml > deploy/secrets-store-csi-provider-class.yaml
 cat deploy/secrets-store-csi-provider-class.yaml
-k apply -f deploy/secrets-store-csi-provider-class.yaml -n $target_namespace
-k get secretproviderclasses -n $target_namespace
-k describe secretproviderclasses azure-$KV_NAME-$POD_ID -n $target_namespace
+oc apply -f deploy/secrets-store-csi-provider-class.yaml -n $target_namespace
+oc get secretproviderclasses -n $target_namespace
+oc describe secretproviderclasses azure-$KV_NAME -n $target_namespace
 
 envsubst < ./cnf/csi-demo-pod-sp.yaml > deploy/csi-demo-pod-sp.yaml
 cat deploy/csi-demo-pod-sp.yaml
-k apply -f deploy/csi-demo-pod-sp.yaml -n $target_namespace
+oc apply -f deploy/csi-demo-pod-sp.yaml -n $target_namespace
 
-k get po -n $target_namespace -o wide
-k get events -n $target_namespace | grep -i "Error" 
-k describe pod nginx-secrets-store-inline -n $target_namespace
-k logs nginx-secrets-store-inline -n $target_namespace
+oc get po -n $target_namespace -o wide
+oc get events -n $target_namespace | grep -i "Error" 
+oc describe pod nginx-secrets-store-inline -n $target_namespace
+oc logs nginx-secrets-store-inline -n $target_namespace
 
 
 ```
