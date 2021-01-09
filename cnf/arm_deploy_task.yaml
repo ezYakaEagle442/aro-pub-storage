@@ -138,8 +138,8 @@ spec:
       workingDir: /workspace/arm-wip
       script: | 
         #!/usr/local/bin/bash
-        echo "pre-flight init step ...""
-        # echo "I am supposed to sleep for 10 seconds!" 
+        echo pre-flight init step ...
+        # echo I am supposed to sleep for 10 seconds!
         echo -----------------------------------     
         sleep 10
       # timeout: 5s
@@ -157,7 +157,7 @@ spec:
       workingDir: /workspace/arm-wip
       script: | 
         #!/usr/local/bin/bash
-        echo "Post-provisionning check completed.""
+        echo Post-provisionning check completed.
         echo -----------------------------------
         sleep 10
       # timeout: 5s
