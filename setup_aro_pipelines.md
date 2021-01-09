@@ -154,7 +154,7 @@ tkn pipeline start arm-deploy \
     -p DEPLOYMENT_GRP=pgsql \
     -p DB_SERVER_NAME=pgsql-flyingblue \
     -p ADM_LOGIN=sky_adm \
-    -p ADM_PWD=SkyIsTheLimit200! \
+    -p ADM_PWD=PGrowth-SKY-noLimit200! \
     -p ARM_RG_LOCATION=francecentral \
     -p AZ_CLI_SP_NAME=$azcli_sp_id \
     -p AZ_CLI_SP_PWD=$azcli_sp_password \
