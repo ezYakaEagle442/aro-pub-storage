@@ -141,7 +141,7 @@ spec:
         echo "pre-flight init step ...""
         # echo "I am supposed to sleep for 10 seconds!"      
         sleep 10
-      timeout: 5s
+      # timeout: 5s
 ---
 apiVersion: tekton.dev/v1beta1
 kind: Task
@@ -158,4 +158,4 @@ spec:
         #!/usr/local/bin/bash
         echo "Post-provisionning check completed.""
         sleep 10
-      timeout: 5s      
+      # timeout: 5s
