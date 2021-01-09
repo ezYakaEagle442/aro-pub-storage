@@ -118,7 +118,7 @@ spec:
 
           echo $arm_result
           
-          if [[ -n "$(echo $arm_result | grep -e "error:" )" ]]
+          if [[ -n "$(echo $arm_result | grep -e "error" )" ]]
             then
                echo ERROR in ARM deployment, EXIT
                exit 1
