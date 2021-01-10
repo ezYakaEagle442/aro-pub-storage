@@ -131,7 +131,13 @@ tkn task describe arm-db-deploy
 oc apply -f ./cnf/arm_deploy_pipeline.yaml
 tkn pipeline list
 tkn pipeline describe arm-deploy
- 
+
+PIPELINE_SECRET="aro-pipeline-secret"
+oc create secret generic $PIPELINE_SECRET \
+--from-literal=az_cli_spn=$azcli_sp_id --from-literal=az_cli_pwd=$azcli_sp_password --from-literal=az_cli_tenant=$tenantId \
+--from-literal=mariadb-adm-pwd="MariaMariaFlyToTheMoon777!" \
+--from-literal=pgsql-adm-pwd="GrowthMindSet-SKY-IsTheLimit200!"
+
 # MariaDB
 tkn pipeline start arm-deploy \
     -w name=arm-wip,volumeClaimTemplateFile=https://raw.githubusercontent.com/openshift/pipelines-tutorial/master/01_pipeline/03_persistent_volume_claim.yaml \
@@ -142,9 +148,10 @@ tkn pipeline start arm-deploy \
     -p ADM_LOGIN=sky_adm \
     -p ADM_PWD=MariaMariaFlyToTheMoon777! \
     -p ARM_RG_LOCATION=francecentral \
-    -p AZ_CLI_SP_NAME=$azcli_sp_id \
-    -p AZ_CLI_SP_PWD=$azcli_sp_password \
-    -p AZ_TENANT=$tenantId
+    -p PIPELINE_SECRET=$PIPELINE_SECRET
+    # -p AZ_CLI_SP_NAME=$azcli_sp_id \
+    # -p AZ_CLI_SP_PWD=$azcli_sp_password \
+    # -p AZ_TENANT=$tenantId
 
 # PostgreSQL
 

@@ -34,15 +34,18 @@ spec:
       description: The Admin password
       type: string
       default: "ARM-PieceOfChocolate!" 
-    - name: AZ_CLI_SP_NAME
-      description: Tekton Service Principal Name to use to Signin to AZ CLI
+    - name: PIPELINE_SECRET
+      description: K8S Secret name that contains the Service Principal Name, Password et Tenant ID to use to Signin to AZ CLI
       type: string
-    - name: AZ_CLI_SP_PWD
-      description: Tekton Service Principal Password
-      type: string
-    - name: AZ_TENANT
-      description: Azure Tenant
-      type: string                   
+    #- name: AZ_CLI_SP_NAME
+    #  description: Tekton Service Principal Name to use to Signin to AZ CLI
+    #  type: string
+    #- name: AZ_CLI_SP_PWD
+    #  description: Tekton Service Principal Password
+    #  type: string
+    #- name: AZ_TENANT
+    #  description: Azure Tenant
+    #  type: string                   
   steps:
     - name: check-params
       image: bash:latest
@@ -79,8 +82,35 @@ spec:
 
           echo -----------------------------------
     - name: deploy-db
+      # https://github.com/tektoncd/pipeline/blob/master/examples/v1beta1/taskruns/secret-env.yaml
       image: mcr.microsoft.com/azure-cli:latest
       workingDir: /workspace/arm-wip
+      env:
+      - name: SECRET_AZ_CLI_SPN
+        valueFrom:
+          secretKeyRef:
+            name: $(params.PIPELINE_SECRET)
+            key: az_cli_spn
+      - name: SECRET_AZ_CLI_PWD
+        valueFrom:
+          secretKeyRef:
+            name: $(params.PIPELINE_SECRET)
+            key: az_cli_pwd
+      - name: SECRET_AZ_CLI_TEANT
+        valueFrom:
+          secretKeyRef:
+            name: $(params.PIPELINE_SECRET)
+            key: az_cli_tenant
+      - name: SECRET_MARIADB_ADM_PWD
+        valueFrom:
+          secretKeyRef:
+            name: $(params.PIPELINE_SECRET)
+            key: mariadb-adm-pwd
+      - name: SECRET_PGSQL_ADM_PWD
+        valueFrom:
+          secretKeyRef:
+            name: $(params.PIPELINE_SECRET)
+            key: pgsql-adm-pwd
       command: ["/bin/bash", "-c"]
       args:
         - |-
@@ -97,13 +127,24 @@ spec:
           db_server=$(inputs.params.DB_SERVER_NAME)
           location=$(inputs.params.ARM_RG_LOCATION)
 
-          az_spn=$(inputs.params.AZ_CLI_SP_NAME)
-          az_pwd=$(inputs.params.AZ_CLI_SP_PWD)
-          az_tenant=$(inputs.params.AZ_TENANT)
+          # az_spn=$(inputs.params.AZ_CLI_SP_NAME)
+          # az_pwd=$(inputs.params.AZ_CLI_SP_PWD)
+          # az_tenant=$(inputs.params.AZ_TENANT)
 
           # https://docs.microsoft.com/en-us/cli/azure/authenticate-azure-cli
+          # https://github.com/tektoncd/pipeline/blob/master/docs/tasks.md#using-a-secret-as-an-environment-source
+          # https://github.com/tektoncd/pipeline/blob/master/docs/tutorial.md
+
           echo Sign in CLI with a Service Principal
-          az login --service-principal -u $az_spn -p $az_pwd --tenant $az_tenant
+
+          echo SECRET_AZ_CLI_SPN=$SECRET_AZ_CLI_SPN
+          echo SECRET_AZ_CLI_PWD=$SECRET_AZ_CLI_PWD
+          echo SECRET_AZ_CLI_TEANT=$SECRET_AZ_CLI_TEANT
+          echo SECRET_MARIADB_ADM_PWD=$SECRET_MARIADB_ADM_PWD
+          echo SECRET_PGSQL_ADM_PWD=$SECRET_PGSQL_ADM_PWD
+
+          # az login --service-principal -u $SECRET_AZ_CLI_SPN -p $az_pwd --tenant $az_tenant
+          az login --service-principal -u $SECRET_AZ_CLI_SPN -p $SECRET_AZ_CLI_PWD --tenant $SECRET_AZ_CLI_TEANT
 
           echo Creating ResourceGroup $arm_rg_name
           az group create --name $arm_rg_name --location $location
