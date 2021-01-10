@@ -328,14 +328,16 @@ oc create -f https://raw.githubusercontent.com/kubernetes-sigs/azuredisk-csi-dri
 
 # Create a disk
 # https://docs.microsoft.com/en-us/cli/azure/disk?view=azure-cli-latest
-az disk create --name aro-dsk --sku Premium_LRS --size-gb 5 --zone 1 --location $location -g $rg_name 
+disk_name="dsk-aro"
+az disk create --name $disk_name --sku Premium_LRS --size-gb 5 --zone 1 --location $location -g $rg_name 
 az disk list -g $rg_name
-disk_id=$(az disk show --name aro-dsk -g $rg_name --query id)
+disk_id=$(az disk show --name $disk_name -g $rg_name --query id)
 
 export SUBSCRIPTION_ID=$subId
 export RESOURCE_GROUP=$rg_name
 export TENANT_ID=$tenantId
 export DISK_ID=$disk_id
+export DISK_NAME=$disk_name
 
 envsubst < ./cnf/pv-static-azuredisk-csi.yaml > deploy/pv-static-azuredisk-csi.yaml
 cat deploy/pv-static-azuredisk-csi.yaml

@@ -12,6 +12,6 @@ spec:
   csi:
     driver: disk.csi.azure.com
     readOnly: false
-    volumeHandle: /subscriptions/${SUBSCRIPTION_ID}/resourcegroups/${RESOURCE_GROUP}/providers/microsoft.compute/disks/${DISK_ID}
+    volumeHandle: /subscriptions/${SUBSCRIPTION_ID}/resourcegroups/${RESOURCE_GROUP}/providers/microsoft.compute/disks/${DISK_NAME}
     volumeAttributes:
       fsType: ext4
