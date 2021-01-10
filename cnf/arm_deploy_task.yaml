@@ -30,26 +30,24 @@ spec:
       description: The Admin user name, Maximum length is 16.
       type: string
       default: "db-admin"
-    - name: ADM_PWD
-      description: The Admin password
-      type: string
-      default: "ARM-PieceOfChocolate!" 
     - name: PIPELINE_SECRET
       description: K8S Secret name that contains the Service Principal Name, Password et Tenant ID to use to Signin to AZ CLI
-      type: string
-    #- name: AZ_CLI_SP_NAME
-    #  description: Tekton Service Principal Name to use to Signin to AZ CLI
-    #  type: string
-    #- name: AZ_CLI_SP_PWD
-    #  description: Tekton Service Principal Password
-    #  type: string
-    #- name: AZ_TENANT
-    #  description: Azure Tenant
-    #  type: string                   
+      type: string                 
   steps:
     - name: check-params
       image: bash:latest
       workingDir: /workspace/arm-wip
+      env:
+      - name: SECRET_MARIADB_ADM_PWD
+        valueFrom:
+          secretKeyRef:
+            name: $(params.PIPELINE_SECRET)
+            key: mariadb-adm-pwd
+      - name: SECRET_PGSQL_ADM_PWD
+        valueFrom:
+          secretKeyRef:
+            name: $(params.PIPELINE_SECRET)
+            key: pgsql-adm-pwd
       command: ["/usr/local/bin/bash", "-c"] # which bash ==> /usr/local/bin/bash
       args:
         - |-
@@ -65,9 +63,26 @@ spec:
           arm_rg_name=$(inputs.params.ARM_RG_NAME)
           arm_deployment_name=$(inputs.params.DEPLOYMENT_GRP)
           db_usr=$(inputs.params.ADM_LOGIN)
-          db_pwd=$(inputs.params.ADM_PWD)
           db_server=$(inputs.params.DB_SERVER_NAME)
           location=$(inputs.params.ARM_RG_LOCATION)
+
+          echo SECRET_MARIADB_ADM_PWD=$SECRET_MARIADB_ADM_PWD
+          echo SECRET_PGSQL_ADM_PWD=$SECRET_PGSQL_ADM_PWD
+          
+          if [[ "$(echo $iac | grep -e "mariadb")" ]]
+            then
+              echo Getting ADM Passord from Secret for MariaDB
+              db_pwd=$SECRET_MARIADB_ADM_PWD
+            else
+               if [[ "$(echo $iac | grep -e "postgresql" )" ]]
+                then 
+                  echo Getting ADM Passord from Secret for PostgreSQL
+                db_pwd=$SECRET_PGSQL_ADM_PWD
+              else
+              echo ERROR This DB is not managed by this PoC script !
+          fi
+
+          echo db_pwd=$db_pwd
 
           echo arm_rg_name=$arm_rg_name
           echo arm_deployment_name=$arm_deployment_name
@@ -101,16 +116,6 @@ spec:
           secretKeyRef:
             name: $(params.PIPELINE_SECRET)
             key: az_cli_tenant
-      - name: SECRET_MARIADB_ADM_PWD
-        valueFrom:
-          secretKeyRef:
-            name: $(params.PIPELINE_SECRET)
-            key: mariadb-adm-pwd
-      - name: SECRET_PGSQL_ADM_PWD
-        valueFrom:
-          secretKeyRef:
-            name: $(params.PIPELINE_SECRET)
-            key: pgsql-adm-pwd
       command: ["/bin/bash", "-c"]
       args:
         - |-
@@ -122,29 +127,10 @@ spec:
 
           arm_rg_name=$(inputs.params.ARM_RG_NAME)
           arm_deployment_name=$(inputs.params.DEPLOYMENT_GRP)
-          db_usr=$(inputs.params.ADM_LOGIN)
-          db_pwd=$(inputs.params.ADM_PWD)
-          db_server=$(inputs.params.DB_SERVER_NAME)
           location=$(inputs.params.ARM_RG_LOCATION)
 
-          # az_spn=$(inputs.params.AZ_CLI_SP_NAME)
-          # az_pwd=$(inputs.params.AZ_CLI_SP_PWD)
-          # az_tenant=$(inputs.params.AZ_TENANT)
-
-          # https://docs.microsoft.com/en-us/cli/azure/authenticate-azure-cli
-          # https://github.com/tektoncd/pipeline/blob/master/docs/tasks.md#using-a-secret-as-an-environment-source
-          # https://github.com/tektoncd/pipeline/blob/master/docs/tutorial.md
-
           echo Sign in CLI with a Service Principal
-
-          echo SECRET_AZ_CLI_SPN=$SECRET_AZ_CLI_SPN
-          echo SECRET_AZ_CLI_PWD=$SECRET_AZ_CLI_PWD
-          echo SECRET_AZ_CLI_TENANT=$SECRET_AZ_CLI_TENANT
-          echo SECRET_MARIADB_ADM_PWD=$SECRET_MARIADB_ADM_PWD
-          echo SECRET_PGSQL_ADM_PWD=$SECRET_PGSQL_ADM_PWD
-
-          # az login --service-principal -u $SECRET_AZ_CLI_SPN -p $az_pwd --tenant $az_tenant
-          az login --service-principal -u $SECRET_AZ_CLI_SPN -p $SECRET_AZ_CLI_PWD --tenant $SECRET_AZ_CLI_TEANT
+          az login --service-principal -u $SECRET_AZ_CLI_SPN -p $SECRET_AZ_CLI_PWD --tenant $SECRET_AZ_CLI_TENANT
 
           echo Creating ResourceGroup $arm_rg_name
           az group create --name $arm_rg_name --location $location

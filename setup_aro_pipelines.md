@@ -146,9 +146,9 @@ tkn pipeline start arm-deploy \
     -p DEPLOYMENT_GRP=mariadb \
     -p DB_SERVER_NAME=mariadb-flyingblue \
     -p ADM_LOGIN=sky_adm \
-    -p ADM_PWD=MariaMariaFlyToTheMoon777! \
     -p ARM_RG_LOCATION=francecentral \
     -p PIPELINE_SECRET=$PIPELINE_SECRET
+    # -p ADM_PWD=MariaMariaFlyToTheMoon777! \
     # -p AZ_CLI_SP_NAME=$azcli_sp_id \
     # -p AZ_CLI_SP_PWD=$azcli_sp_password \
     # -p AZ_TENANT=$tenantId
