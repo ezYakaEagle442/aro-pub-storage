@@ -50,6 +50,7 @@ cat <<EOF >> deploy/cloud.conf
 "tenantId": "$tenantId",
 "subscriptionId": $subId,
 "resourceGroup": "$managed_rg_name",
+"location": "$location",
 "useManagedIdentityExtension": false,
 "aadClientId": "$aadClientId",
 "aadClientSecret": "$aadClientSecret"
@@ -319,7 +320,7 @@ See doc examples :
 oc create -f https://raw.githubusercontent.com/kubernetes-sigs/azuredisk-csi-driver/master/deploy/example/storageclass-azuredisk-csi.yaml
 oc create -f https://raw.githubusercontent.com/kubernetes-sigs/azuredisk-csi-driver/master/deploy/example/pvc-azuredisk-csi.yaml
 
-# oc delete StorageClass disk.csi.azure.com
+# oc delete StorageClass managed-csi
 # oc delete pvc pvc-azuredisk
 
 # Option 2: Azuredisk Static Provisioning(use an existing azure disk)
