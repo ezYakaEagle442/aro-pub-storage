@@ -66,23 +66,18 @@ spec:
           db_server=$(inputs.params.DB_SERVER_NAME)
           location=$(inputs.params.ARM_RG_LOCATION)
 
-          echo SECRET_MARIADB_ADM_PWD=$SECRET_MARIADB_ADM_PWD
-          echo SECRET_PGSQL_ADM_PWD=$SECRET_PGSQL_ADM_PWD
-          
           if [[ "$(echo $iac | grep -e "mariadb")" ]]
             then
               echo Getting ADM Passord from Secret for MariaDB
               db_pwd=$SECRET_MARIADB_ADM_PWD
-            else
-               if [[ "$(echo $iac | grep -e "postgresql" )" ]]
+            elif [[ "$(echo $iac | grep -e "postgresql" )" ]]
                 then 
                   echo Getting ADM Passord from Secret for PostgreSQL
-                db_pwd=$SECRET_PGSQL_ADM_PWD
-              else
-              echo ERROR This DB is not managed by this PoC script !
+                  db_pwd=$SECRET_PGSQL_ADM_PWD
+                else
+                echo ERROR This DB is not managed by this PoC script !
+                exit 1
           fi
-
-          echo db_pwd=$db_pwd
 
           echo arm_rg_name=$arm_rg_name
           echo arm_deployment_name=$arm_deployment_name
@@ -145,7 +140,7 @@ spec:
 
           echo $arm_result
           
-          if [[ -n "$(echo $arm_result | grep -e "error" )" ]]
+          if [[ -n "$(echo $arm_result | grep -e "error")" ]]
             then
               echo No error in ARM deployment
               exit 0
