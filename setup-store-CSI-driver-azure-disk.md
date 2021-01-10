@@ -316,14 +316,13 @@ See doc examples :
 - [basic usage](https://github.com/kubernetes-sigs/azuredisk-csi-driver/blob/master/deploy/example/e2e_usage.md)
 
 ```sh
-# Option 1: Azuredisk Dynamic Provisioning
+# Option 1: Azuredisk Static Provisioning
 oc create -f https://raw.githubusercontent.com/kubernetes-sigs/azuredisk-csi-driver/master/deploy/example/storageclass-azuredisk-csi.yaml
-oc create -f https://raw.githubusercontent.com/kubernetes-sigs/azuredisk-csi-driver/master/deploy/example/pvc-azuredisk-csi.yaml
+oc create -f https://raw.githubusercontent.com/kubernetes-sigs/azuredisk-csi-driver/master/deploy/example/pvc-azuredisk-csi-static.yaml
 
 # oc delete StorageClass managed-csi
 # oc delete pvc pvc-azuredisk
 
-# Option 2: Azuredisk Static Provisioning(use an existing azure disk)
 # wget https://raw.githubusercontent.com/kubernetes-sigs/azuredisk-csi-driver/master/deploy/example/pv-azuredisk-csi.yaml > ./cnf/pv-static-azuredisk-csi.yaml
 
 # Create a disk
@@ -341,7 +340,7 @@ export DISK_NAME=$disk_name
 
 envsubst < ./cnf/pv-static-azuredisk-csi.yaml > deploy/pv-static-azuredisk-csi.yaml
 cat deploy/pv-static-azuredisk-csi.yaml
-oc create -f ./cnf/pv-static-azuredisk-csi.yaml
+oc create -f ./deploy/pv-static-azuredisk-csi.yaml
 
 # make sure pvc is created and in Bound status finally
 watch oc describe pvc pvc-azuredisk
@@ -351,9 +350,11 @@ oc create -f https://raw.githubusercontent.com/kubernetes-sigs/azuredisk-csi-dri
 
 # enter the pod container to do validation: watch the status of pod until its Status changed from Pending to Running and then enter the pod container
 watch oc describe po nginx-azuredisk
-oc exec -it nginx-azuredisk -- bash
+oc exec -it nginx-azuredisk -- sh
 
 # /mnt/azuredisk directory should mounted as disk filesystem
+ls -al /mnt/azuredisk
+cat /mnt/azuredisk/outfile
 ```
 
 ## Snapshot
