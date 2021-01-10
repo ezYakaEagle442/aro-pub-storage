@@ -124,6 +124,12 @@ tenantId=$(az account show --query tenantId -o tsv)
 oc get cm feature-flags -n openshift-pipelines
 oc describe cm feature-flags -n openshift-pipelines
 
+PIPELINE_SECRET="aro-pipeline-secret"
+oc create secret generic $PIPELINE_SECRET \
+--from-literal=az_cli_spn=$azcli_sp_id --from-literal=az_cli_pwd=$azcli_sp_password --from-literal=az_cli_tenant=$tenantId \
+--from-literal=mariadb-adm-pwd="MariaMariaFlyToTheMoon777!" \
+--from-literal=pgsql-adm-pwd="GrowthMindSet-SKY-IsTheLimit200!"
+
 oc create -f ./cnf/arm_deploy_task.yaml
 tkn task ls
 tkn task describe arm-db-deploy
@@ -131,12 +137,6 @@ tkn task describe arm-db-deploy
 oc apply -f ./cnf/arm_deploy_pipeline.yaml
 tkn pipeline list
 tkn pipeline describe arm-deploy
-
-PIPELINE_SECRET="aro-pipeline-secret"
-oc create secret generic $PIPELINE_SECRET \
---from-literal=az_cli_spn=$azcli_sp_id --from-literal=az_cli_pwd=$azcli_sp_password --from-literal=az_cli_tenant=$tenantId \
---from-literal=mariadb-adm-pwd="MariaMariaFlyToTheMoon777!" \
---from-literal=pgsql-adm-pwd="GrowthMindSet-SKY-IsTheLimit200!"
 
 # MariaDB
 tkn pipeline start arm-deploy \

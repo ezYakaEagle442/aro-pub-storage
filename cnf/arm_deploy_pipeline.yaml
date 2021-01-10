@@ -30,22 +30,25 @@ spec:
       description: The Admin user name, Maximum length is 16.
       type: string
       default: "db-admin"
-    - name: ADM_PWD
-      description: The Admin password
-      type: string
-      default: "ARM-PieceOfChocolate!" 
-    - name: AZ_CLI_SP_NAME
-      description: Tekton Service Principal Name to use to Signin to AZ CLI
-      type: string
-      default: "XXX"
-    - name: AZ_CLI_SP_PWD
-      description: Tekton Service Principal Password # should be protected as a secret https://github.com/tektoncd/pipeline/blob/master/docs/resources.md
-      type: string
-      default: "XXX"
-    - name: AZ_TENANT
-      description: Azure Tenant
-      type: string
-      default: "XXX"            
+    - name: PIPELINE_SECRET
+      description: K8S Secret name that contains the Service Principal Name, Password et Tenant ID to use to Signin to AZ CLI
+      type: string      
+    #- name: ADM_PWD
+    #  description: The Admin password
+    #  type: string
+    #  default: "ARM-PieceOfChocolate!" 
+    #- name: AZ_CLI_SP_NAME
+    #  description: Tekton Service Principal Name to use to Signin to AZ CLI
+    #  type: string
+    #  default: "XXX"
+    #- name: AZ_CLI_SP_PWD
+    #  description: Tekton Service Principal Password # should be protected as a secret https://github.com/tektoncd/pipeline/blob/master/docs/resources.md
+    #  type: string
+    #  default: "XXX"
+    # name: AZ_TENANT
+    #  description: Azure Tenant
+    #  type: string
+    #  default: "XXX"            
   tasks:
   - name: init
     taskRef:
@@ -74,14 +77,16 @@ spec:
       value: $(params.DB_SERVER_NAME)
     - name: ADM_LOGIN
       value: $(params.ADM_LOGIN)
-    - name: ADM_PWD
-      value: $(params.ADM_PWD)
-    - name: AZ_CLI_SP_NAME
-      value: $(params.AZ_CLI_SP_NAME)
-    - name: AZ_CLI_SP_PWD
-      value: $(params.AZ_CLI_SP_PWD)
-    - name: AZ_TENANT
-      value: $(params.AZ_TENANT)
+    - name: PIPELINE_SECRET
+      value: $(params.PIPELINE_SECRET)      
+    #- name: ADM_PWD
+    #  value: $(params.ADM_PWD)
+    #- name: AZ_CLI_SP_NAME
+    #  value: $(params.AZ_CLI_SP_NAME)
+    #- name: AZ_CLI_SP_PWD
+    #  value: $(params.AZ_CLI_SP_PWD)
+    #- name: AZ_TENANT
+    #  value: $(params.AZ_TENANT)
   - name: post-check
     taskRef:
       name: arm-db-post-check

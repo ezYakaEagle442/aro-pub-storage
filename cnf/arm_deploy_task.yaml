@@ -96,7 +96,7 @@ spec:
           secretKeyRef:
             name: $(params.PIPELINE_SECRET)
             key: az_cli_pwd
-      - name: SECRET_AZ_CLI_TEANT
+      - name: SECRET_AZ_CLI_TENANT
         valueFrom:
           secretKeyRef:
             name: $(params.PIPELINE_SECRET)
@@ -139,7 +139,7 @@ spec:
 
           echo SECRET_AZ_CLI_SPN=$SECRET_AZ_CLI_SPN
           echo SECRET_AZ_CLI_PWD=$SECRET_AZ_CLI_PWD
-          echo SECRET_AZ_CLI_TEANT=$SECRET_AZ_CLI_TEANT
+          echo SECRET_AZ_CLI_TENANT=$SECRET_AZ_CLI_TENANT
           echo SECRET_MARIADB_ADM_PWD=$SECRET_MARIADB_ADM_PWD
           echo SECRET_PGSQL_ADM_PWD=$SECRET_PGSQL_ADM_PWD
 
