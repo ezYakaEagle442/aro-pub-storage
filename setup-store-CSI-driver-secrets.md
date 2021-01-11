@@ -8,13 +8,52 @@ CSI driver provides the ability to [sync with Kubernetes secrets, which can then
 
 
 
-# Install the Secrets Store CSI Driver and the Azure Keyvault Provider
+# Pre-req: Install the Secrets Store CSI Driver
+
+[https://github.com/kubernetes-sigs/secrets-store-csi-driver/blob/master/charts/secrets-store-csi-driver/README.md](https://github.com/kubernetes-sigs/secrets-store-csi-driver/blob/master/charts/secrets-store-csi-driver/README.md)
+
+```sh
+
+oc adm policy add-scc-to-user privileged system:serviceaccount:$target_namespace:secrets-store-csi-driver
+oc describe scc privileged
+
+helm install csi-secrets-store secrets-store-csi-driver/secrets-store-csi-driver -n $target_namespace
+
+oc get crd
+oc get sa $target_namespace
+oc get ds -n $target_namespace
+oc describe ds csi-secrets-store-secrets-store-csi-driver -n $target_namespace
+
+oc get po --namespace=kube-system -l "app=secrets-store-csi-driver"
+
+```
+
+#  Install the Azure Keyvault Provider
 
 [Installing the Chart](https://github.com/Azure/secrets-store-csi-driver-provider-azure/blob/master/charts/csi-secrets-store-provider-azure/README.md)
 ```sh
+# https://github.com/Azure/secrets-store-csi-driver-provider-azure/issues/363
 helm install csi-secrets-store-provider-azure csi-secrets-store-provider-azure/csi-secrets-store-provider-azure -n $target_namespace
 helm ls -n $target_namespace -o yaml
 helm status csi-secrets-store-provider-azure -n $target_namespace
+
+# workaround : manual install
+# https://github.com/Azure/secrets-store-csi-driver-provider-azure/blob/master/docs/install-yamls.md
+# https://github.com/kubernetes-sigs/secrets-store-csi-driver#install-the-secrets-store-csi-driver
+# 
+
+# oc apply -f https://raw.githubusercontent.com/Azure/secrets-store-csi-driver-provider-azure/master/deployment/pod-security-policy.yaml
+
+oc get pods -l app=csi-secrets-store -n $target_namespace
+oc get ds -l app=csi-secrets-store -o jsonpath='{range .items[*]}{.spec.template.spec.containers[1].args}{"\n"}'
+oc apply -f ./cnf/secrets-store-csi-driver-provider-azure__provider-azure-installer.yaml
+# oc apply -f https://raw.githubusercontent.com/Azure/secrets-store-csi-driver-provider-azure/master/deployment/provider-azure-installer.yaml
+oc get pods -l app=csi-secrets-store-provider-azure
+
+oc adm policy add-scc-to-user privileged system:serviceaccount:csi-secrets-store-provider-azure
+oc describe scc privileged
+
+
 ```
 
 # Create key-Vault & Secret
