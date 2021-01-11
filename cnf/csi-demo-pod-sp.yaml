@@ -17,6 +17,6 @@ spec:
         driver: secrets-store.csi.k8s.io
         readOnly: true
         volumeAttributes:
-          secretProviderClass: azure-$KV_NAME
+          secretProviderClass: $KV_NAME
         nodePublishSecretRef:                       # Only required when using service principal mode
           name: secrets-store-creds
