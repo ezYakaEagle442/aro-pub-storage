@@ -85,7 +85,7 @@ spec:
           echo db_usr=$db_usr
           echo location=$location
 
-          echo About to replace parameters default values with the ones provided :
+          echo About to replace parameters default values with the ones provided
           sed -i  $iac/azuredeploy.parameters.json -e "s/\GEN-UNIQUE-8/\1${db_usr}/I"
           sed -i  $iac/azuredeploy.parameters.json -e "s/\GEN-UNIQUE/\1${db_server}/I"
           sed -i  $iac/azuredeploy.parameters.json -e "s/\GEN-PASSWORD/\1${db_pwd}/I"

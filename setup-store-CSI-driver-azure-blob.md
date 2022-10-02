@@ -56,6 +56,7 @@ cat <<EOF >> deploy/cloud.conf
 "tenantId": "$tenantId",
 "subscriptionId": $subId,
 "resourceGroup": "$managed_rg_name",
+"location": "$location",
 "useManagedIdentityExtension": false,
 "aadClientId": "$aadClientId",
 "aadClientSecret": "$aadClientSecret"

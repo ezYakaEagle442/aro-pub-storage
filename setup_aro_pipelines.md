@@ -148,13 +148,8 @@ tkn pipeline start arm-deploy \
     -p ADM_LOGIN=sky_adm \
     -p ARM_RG_LOCATION=francecentral \
     -p PIPELINE_SECRET=$PIPELINE_SECRET
-    # -p ADM_PWD=MariaMariaFlyToTheMoon777! \
-    # -p AZ_CLI_SP_NAME=$azcli_sp_id \
-    # -p AZ_CLI_SP_PWD=$azcli_sp_password \
-    # -p AZ_TENANT=$tenantId
 
 # PostgreSQL
-
 # Admin login name cannot be 'azure_superuser', 'azure_pg_admin', 'admin', 'administrator', 'root', 'guest', 'public' or start with 'pg_'.
 # Your password must be at least 8 characters and at most 128 characters.
 # Your password must contain characters from three of the following categories – English uppercase letters, English lowercase letters, numbers (0-9), and non-alphanumeric characters (!, $, #, %, etc.).
@@ -166,11 +161,8 @@ tkn pipeline start arm-deploy \
     -p DEPLOYMENT_GRP=pgsql \
     -p DB_SERVER_NAME=pgsql-flyingblue \
     -p ADM_LOGIN=azure_pg_adm \
-    -p ADM_PWD=GrowthMindSet-SKY-IsTheLimit200! \
     -p ARM_RG_LOCATION=francecentral \
-    -p AZ_CLI_SP_NAME=$azcli_sp_id \
-    -p AZ_CLI_SP_PWD=$azcli_sp_password \
-    -p AZ_TENANT=$tenantId
+    -p PIPELINE_SECRET=$PIPELINE_SECRET
 
 tkn pipelinerun ls
 

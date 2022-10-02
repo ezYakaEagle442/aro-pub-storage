@@ -17,7 +17,7 @@ CSI driver provides the ability to [sync with Kubernetes secrets, which can then
 oc adm policy add-scc-to-user privileged system:serviceaccount:$target_namespace:secrets-store-csi-driver
 oc describe scc privileged
 
-helm install csi-secrets-store secrets-store-csi-driver/secrets-store-csi-driver -n $target_namespace
+helm install csi-secrets-store secrets-store-csi-driver/secrets-store-csi-driver --set grpcSupportedProviders=azure -n $target_namespace
 
 oc get crd
 oc get sa $target_namespace
@@ -44,13 +44,17 @@ helm status csi-secrets-store-provider-azure -n $target_namespace
 
 # oc apply -f https://raw.githubusercontent.com/Azure/secrets-store-csi-driver-provider-azure/master/deployment/pod-security-policy.yaml
 
-oc get pods -l app=csi-secrets-store -n $target_namespace
-oc get ds -l app=csi-secrets-store -o jsonpath='{range .items[*]}{.spec.template.spec.containers[1].args}{"\n"}'
-oc apply -f ./cnf/secrets-store-csi-driver-provider-azure__provider-azure-installer.yaml
+oc get pods -l app=secrets-store-csi-driver -n $target_namespace
+oc get ds -l app=secrets-store-csi-driver  -n $target_namespace -o jsonpath='{range .items[*]}{.spec.template.spec.containers[1].args}{"\n"}'
+
+# Ensure to have --grpc-supported-providers=azure defined in the yaml see 
+oc apply -f ./cnf/secrets-store-csi-driver-provider-azure__provider-azure-installer.yaml -n $target_namespace
 # oc apply -f https://raw.githubusercontent.com/Azure/secrets-store-csi-driver-provider-azure/master/deployment/provider-azure-installer.yaml
 oc get pods -l app=csi-secrets-store-provider-azure
 
 oc adm policy add-scc-to-user privileged system:serviceaccount:csi-secrets-store-provider-azure
+oc adm policy add-scc-to-user privileged system:serviceaccount:$target_namespace:csi-secrets-store-provider-azure
+oc adm policy add-scc-to-user privileged system:serviceaccount:petclinic-prod:csi-secrets-store-provider-azure
 oc describe scc privileged
 
 
@@ -117,11 +121,20 @@ export SECRET_NAME=$vault_secret_name
 
 oc create secret generic secrets-store-creds --from-literal clientid=$aro_client_id --from-literal clientsecret=$aro_client_secret -n $target_namespace
 
+# Test secret
+oc get secret secrets-store-creds -n $target_namespace
+oc describe secret secrets-store-creds -n $target_namespace
+clientid_decoded_secret=$(oc get secret secrets-store-creds -n $target_namespace -o jsonpath="{.data.clientid}" | base64 --decode)
+echo "Secret clientid decoded: " $clientid_decoded_secret
+clientsecret_decoded_secret=$(oc get secret secrets-store-creds -n $target_namespace -o jsonpath="{.data.clientsecret}" | base64 --decode)
+echo "Secret clientsecret decoded: " $clientsecret_decoded_secret
+
+
 envsubst < ./cnf/secrets-store-csi-provider-class.yaml > deploy/secrets-store-csi-provider-class.yaml
 cat deploy/secrets-store-csi-provider-class.yaml
 oc apply -f deploy/secrets-store-csi-provider-class.yaml -n $target_namespace
 oc get secretproviderclasses -n $target_namespace
-oc describe secretproviderclasses azure-$KV_NAME -n $target_namespace
+oc describe secretproviderclasses $KV_NAME -n $target_namespace
 
 envsubst < ./cnf/csi-demo-pod-sp.yaml > deploy/csi-demo-pod-sp.yaml
 cat deploy/csi-demo-pod-sp.yaml
