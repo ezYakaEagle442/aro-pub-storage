@@ -49,6 +49,8 @@ Pre-req: Windows 10, updated to version 2004, **Build 19041** or higher.
 ```sh
 
 
+choco install wsl2 --Yes --confirm --accept-license --verbose 
+choco install wsl-ubuntu-2004 --confirm --accept-license --verbose
 ```
 
 ## Setup PowerShell in WSL
@@ -198,6 +200,17 @@ chmod 700 get_helm.sh
 ## Kubectl-Windows-Linux-Shell
 ```sh
 # https://github.com/Azure/kubelogin : N/A on ARO
+
+az aks install-cli -h
+sudo az aks install-cli
+
+export KUBECONFIG=~/.kube/config
+
+kubelogin --help
+kubelogin convert-kubeconfig
+kubelogin get-token 
+kubectl get no
+
 
 ```
 
