@@ -22,6 +22,14 @@ mkdir deploy
 tenantId=$(az account show --query tenantId -o tsv)
 
 # https://kubernetes.io/docs/concepts/configuration/secret/#decoding-a-secret
+
+# ---IMPORTANT
+# You need to set your location, cluster name and resource group name as environment variables
+
+# location=eastus
+# cluster_name=my-cluster
+# rg_name=myresourcegroup
+
 oc get secrets -n kube-system
 oc describe secret azure-cloud-provider -n kube-system
 azure_cnf_secret=$(oc get secret azure-cloud-provider -n kube-system -o jsonpath="{.data.cloud-config}" | base64 --decode)
@@ -82,58 +90,9 @@ oc describe scc privileged
 
 ```sh
 
-oc apply -f ./cnf/cloud-cfg-test-pod.yaml
-oc describe pvc test-host-pvc
-oc describe pv test-host-pv
-oc describe pod test-pod
-oc get po
-oc exec -it test-pod -- cat /mnt/k8s/cloud.conf
+helm repo add blob-csi-driver https://raw.githubusercontent.com/kubernetes-sigs/blob-csi-driver/master/charts
 
-oc create configmap azure-cred-file --from-literal=path="/etc/kubernetes/cloud.conf" -n kube-system
-oc get cm -n kube-system
-oc describe cm azure-cred-file -n kube-system
-
-driver_version=master #vv0.11.0
-echo "Driver version " $driver_version
-curl -skSL https://raw.githubusercontent.com/kubernetes-sigs/blob-csi-driver/$driver_version/deploy/install-driver.sh | bash -s $driver_version --
-
-
-oc get rolebinding -n kube-system | grep -i "csi-blob"
-oc get role -n kube-system | grep -i "csi-blob"
-oc get ClusterRoleBinding | grep -i "csi-blob"
-oc get ClusterRole | grep -i "csi-blob"
-oc get cm -n kube-system  | grep -i "csi-blob"
-oc get sa -n kube-system | grep -i "csi-blob"
-oc get svc -n kube-system
-oc get psp | grep -i "csi-blob"
-oc get ds -n kube-system | grep -i "csi-blob"
-oc get deploy -n kube-system | grep -i "csi-blob"
-oc get rs -n kube-system | grep -i "csi-blob"
-oc get po -n kube-system | grep -i "csi-blob"
-oc get sc -A
-
-# oc get pod -n kube-system -l app=csi-blob-controller -o wide --watch 
-# oc get pod -n kube-system -l app=app=csi-blob-node -o wide --watch 
-
-oc get events -n kube-system | grep -i "Error" 
-
-for pod in $(oc get pods -l app=csi-blob-controller -n kube-system -o custom-columns=:metadata.name)
-do
-	oc describe pod $pod -n kube-system | grep -i "Error"
-	oc logs $pod -c csi-provisioner -n kube-system | grep -i "Error"
-    oc logs $pod -c csi-resizer -n kube-system | grep -i "Error"
-    oc logs $pod -c liveness-probe -n kube-system | grep -i "Error"
-    oc logs $pod -c blob -n kube-system | grep -i "Error"
-done
-
-for pod in $(oc get pods -l app=csi-blob-node -n kube-system -o custom-columns=:metadata.name)
-do
-	oc describe pod $pod -n kube-system | grep -i "Error"
-    oc logs $pod -c liveness-probe -n kube-system #| grep -i "Error"
-    oc logs $pod -c node-driver-registrar # | grep -i "Error"
-    oc logs $pod -c blob -n kube-system # | grep -i "Error"
-done
-
+helm install blob-csi-driver blob-csi-driver/blob-csi-driver --namespace kube-system --set linux.distro=fedora --set node.enableBlobfuseProxy=false
 
 ```
 ### [Troubleshoot](https://github.com/kubernetes-sigs/blob-csi-driver/blob/master/docs/csi-debug.md)
@@ -147,15 +106,18 @@ it means that you have the cloud provider config file is not correctly set at /e
 [https://github.com/kubernetes-sigs/blob-csi-driver/blob/master/deploy/example/e2e_usage.md](https://github.com/kubernetes-sigs/blob-csi-driver/blob/master/deploy/example/e2e_usage.md)
 
 
-# Create strorage Class
+# Create storage Class
 ```sh
-# oc create -f https://raw.githubusercontent.com/kubernetes-sigs/blob-csi-driver/master/deploy/example/storageclass-blobfuse.yaml
-# Create a statefulset with volume mount
-# oc create -f https://raw.githubusercontent.com/kubernetes-sigs/blob-csi-driver/master/deploy/example/statefulset.yaml
-# oc get sts
-# oc exec -it statefulset-blob-0 -- bash
 
+# set your application Name in a proper env var.
+
+appName=myapp
+
+#bash
 str_name="stweblob""${appName,,}"
+#zsh
+str_name="stweblob""${appName:l}"
+
 export AZURE_STORAGE_ACCOUNT=$str_name
 
 az storage account create --name $str_name --kind StorageV2 --sku Standard_LRS --location $location -g $rg_name 
@@ -180,8 +142,44 @@ envsubst < ./cnf/storageclass-blobfuse-existing-container.yaml > deploy/storagec
 cat deploy/storageclass-blobfuse-existing-container.yaml
 
 oc create -f ./deploy/storageclass-blobfuse-existing-container.yaml
-oc create -f https://raw.githubusercontent.com/kubernetes-sigs/blob-csi-driver/master/deploy/example/pvc-blob-csi.yaml
-oc create -f https://raw.githubusercontent.com/kubernetes-sigs/blob-csi-driver/master/deploy/example/nginx-pod-blob.yaml
+
+cat <<EOF | oc apply -f -
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: pvc-blob
+spec:
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 10Gi
+  storageClassName: blob
+EOF
+
+cat <<EOF | oc apply -f -
+kind: Pod
+apiVersion: v1
+metadata:
+  name: nginx-blob
+spec:
+  nodeSelector:
+    "kubernetes.io/os": linux
+  containers:
+    - image: mcr.microsoft.com/oss/nginx/nginx:1.17.3-alpine
+      name: nginx-blob
+      command:
+        - "/bin/sh"
+        - "-c"
+        - while true; do echo $(date) >> /mnt/blob/outfile; sleep 1; done
+      volumeMounts:
+        - name: blob01
+          mountPath: "/mnt/blob"
+  volumes:
+    - name: blob01
+      persistentVolumeClaim:
+        claimName: pvc-blob
+EOF
 
 oc get po
 oc exec -it nginx-blob -- sh
